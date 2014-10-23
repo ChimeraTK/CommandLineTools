@@ -86,7 +86,7 @@ foreach( SCRIPT_WITH_PATH ${TEST_SCRIPTS} )
   #strip the extension from the scripts name to use it as a test name
   #NAME_WE means the base name without path and (longest) extension
   get_filename_component( TEST_NAME ${SCRIPT} NAME_WE)
-  add_test( ${TEST_NAME} ${PROJECT_BINARY_DIR}/${SCRIPT} WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+  add_test( ${TEST_NAME} ${PROJECT_BINARY_DIR}/${SCRIPT} )
 endforeach( SCRIPT_WITH_PATH )
 
 

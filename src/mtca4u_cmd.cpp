@@ -65,7 +65,7 @@ vector<Command> vectorOfCommands = {
  * @param[in] argv Pointer to additional parameter
  *
  */
-int main(unsigned int argc, const char* argv[])
+int main(int argc, const char* argv[])
 {
   if(argc < 2) { cerr << "Not enough input arguments. Use mtca4u help to show some help information." << endl; return 1;}
     
@@ -145,9 +145,9 @@ devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName =
  * @param[in] argv Pointer to additional parameter
  *
  */
-void PrintHelp(unsigned int argc, const char* argv[])
+void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
 {
-  cout << endl << "mtca4u command line tools, revision: " << gVersion << "\n" << endl;
+  cout << endl << "mtca4u command line tools, version " << command_line_tools::VERSION << "\n" << endl;
   cout << "Available commands are:" << endl << endl;
 
   for (vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it)
@@ -164,7 +164,7 @@ void PrintHelp(unsigned int argc, const char* argv[])
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getInfo(unsigned int argc, const char* argv[])
+void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 { 
   dmapFilesParser filesParser(".");
   filesParser.parse_dir(".");
@@ -327,7 +327,7 @@ void readDmaChannelFromDevice(unsigned int argc, const char *argv[])
     if (sample <= 0) // Prevent invalid inputs
       throw exBase("Invalid input argument.", 5);
     
-    const uint32_t totalChannels = 8;
+    const int32_t totalChannels = 8;
     const uint32_t size = sample*totalChannels;
     vector<int32_t> values(size);
     
@@ -341,7 +341,8 @@ void readDmaChannelFromDevice(unsigned int argc, const char *argv[])
 
     device.readDMA("AREA_DMA", &(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
 
-    for(unsigned int is = 0; is < sample; is++)
+    // it is safe to cast sample to int because we checked the range before
+    for(unsigned int is = 0; is < static_cast<unsigned int>(sample); is++)
     {
       if (Channel == -1) // Print all channel if none is specified
       { 

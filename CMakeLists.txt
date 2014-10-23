@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.0)
 project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
-set(${PROJECT_NAME}_MINOR_VERSION 00)
+set(${PROJECT_NAME}_MINOR_VERSION 01)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
@@ -13,10 +13,23 @@ set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC -Wextra -Wshadow -pedantic -Wuninitialized -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+#enable C++11 support. Unfortunately the flag is c++0x in gcc4.6, which we still have to support which makes
+#it a bit lengthy
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
 
 FIND_PACKAGE(MtcaMappedDevice 00.11 REQUIRED)
 include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
@@ -30,8 +43,10 @@ include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
 #ENDIF(Boost_UNIT_TEST_FRAMEWORK_FOUND)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
-set(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include/)
-#aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
+#put the version number into the version file and add the include directory in the build tree, where we put it
+configure_file(cmake/version.h.in
+  "${PROJECT_BINARY_DIR}/include/version.h" @ONLY)
+include_directories(${PROJECT_BINARY_DIR}/include)
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 target_link_libraries(mtca4u ${MtcaMappedDevice_LIBRARIES})    
@@ -45,8 +60,8 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 #Install the library and the executables
 install(TARGETS mtca4u
-            RUNTIME DESTINATION bin
-	    LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
   )
 
 # The instructions to create a debian package are loaded from a separate file

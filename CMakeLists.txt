@@ -64,5 +64,32 @@ install(TARGETS mtca4u
   LIBRARY DESTINATION lib
   )
 
+ENABLE_TESTING()
+
+#copy the reference output texts needed for testing
+FILE(GLOB REFERENCE_TEXTS ${CMAKE_SOURCE_DIR}/tests/referenceTexts/*.txt )
+message("referenceTexts ${referenceTexts}")
+foreach( REFERENCE_FILE_WITH_PATH ${REFERENCE_TEXTS} )
+  get_filename_component( REFERENCE_FILE ${REFERENCE_FILE_WITH_PATH} NAME )
+  configure_file( ${REFERENCE_FILE_WITH_PATH} ${PROJECT_BINARY_DIR}/${REFERENCE_FILE} copyonly)
+endforeach( REFERENCE_FILE_WITH_PATH )
+
+#add all tests
+#Little hack: Each type of script has to be added separately.
+#Without .sh it would also pick up backupfiles .sh~ etc.
+FILE(GLOB SHELL_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts/*.sh )
+FILE(GLOB PYTHON_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts/*.py )
+FILE(GLOB TEST_SCRIPTS ${SHELL_SCRIPTS} ${PYTHON_SCRIPTS})
+foreach( SCRIPT_WITH_PATH ${TEST_SCRIPTS} )
+  get_filename_component( SCRIPT ${SCRIPT_WITH_PATH} NAME )
+  configure_file( ${SCRIPT_WITH_PATH} ${PROJECT_BINARY_DIR}/${SCRIPT} copyonly)
+  #strip the extension from the scripts name to use it as a test name
+  #NAME_WE means the base name without path and (longest) extension
+  get_filename_component( TEST_NAME ${SCRIPT} NAME_WE)
+  add_test( ${TEST_NAME} ${PROJECT_BINARY_DIR}/${SCRIPT} WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+endforeach( SCRIPT_WITH_PATH )
+
+
+
 # The instructions to create a debian package are loaded from a separate file
 #include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)

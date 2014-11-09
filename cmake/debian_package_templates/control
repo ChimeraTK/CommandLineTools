@@ -1,0 +1,33 @@
+Source: mtca4u-command-line-tools
+Priority: extra
+Maintainer: Martin Killenberg <martin.killenberg@desy.de>
+Build-Depends: debhelper (>= 7), cmake (>= 2.8), dev-mtcamappeddevice (>=00.11)
+Standards-Version: 3.8.3
+Section: utils
+#Homepage: <insert the upstream URL, if relevant>
+
+#No devel package for the time being. This is not a library but 
+# a set of a executables.
+#Package: dev-mtca4u-command-line-tools
+#Section: devel
+#Architecture: any
+#Depends: mtca4u-command-line-tools (= ${binary:Version})
+#Description: Header and cmake files for MTCA4U Mtca4u-Command-Line-Tools.
+# The files you need to compile against MTCA4U Mtca4u-Command-Line-Tools.
+
+Package: mtca4u-command-line-tools-empty
+#The section is intentionally not set. Like this the package
+#cannot be (accidentally) installed on the repository server.
+#Section: 
+Architecture: all
+Depends: mtca4u-command-line-tools (= ${binary:Version})
+Description: Empty package to trick dpkg-buildpackage.
+ I use this package so the mtca4u-command-line-tools.install works. This somehow is only
+ the case if at least two packages are build. Just ignore it.
+
+Package: mtca4u-command-line-tools
+Section: utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: MTCA4U command line tools to read and write from the command line
+ using device aliasses and register names.

@@ -4,7 +4,7 @@ project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
 set(${PROJECT_NAME}_MINOR_VERSION 01)
-set(${PROJECT_NAME}_PATCH_VERSION 00)
+set(${PROJECT_NAME}_PATCH_VERSION 01)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
@@ -92,4 +92,4 @@ endforeach( SCRIPT_WITH_PATH )
 
 
 # The instructions to create a debian package are loaded from a separate file
-#include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)

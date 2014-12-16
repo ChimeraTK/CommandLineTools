@@ -67,7 +67,11 @@ vector<Command> vectorOfCommands = {
  */
 int main(int argc, const char* argv[])
 {
-  if(argc < 2) { cerr << "Not enough input arguments. Use mtca4u help to show some help information." << endl; return 1;}
+  if(argc < 2) {
+    cerr << "Not enough input arguments. Please find usage instructions below." << endl;
+    PrintHelp(argc, argv);
+    return 1;
+  }
     
   string cmd = argv[1];
   transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
@@ -84,7 +88,8 @@ int main(int argc, const char* argv[])
 
     // Check if search was successfull
     if(it == vectorOfCommands.end()) {
-      cerr << "Unknown command. Use mtca4u help to show some help information." << endl;
+      cerr << "Unknown command. Please find usage instructions below." << endl;
+      PrintHelp(argc, argv);
       return 1;
     }
 

@@ -9,11 +9,15 @@ set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
  
+FIND_PACKAGE(MtcaMappedDevice 00.11 REQUIRED)
+include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
+
 #use -DCMAKE_BUILD_TYPE=Debug then configuring to turn on the coverage tests (and debug symbols)
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
@@ -31,16 +35,6 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-FIND_PACKAGE(MtcaMappedDevice 00.11 REQUIRED)
-include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
-
-#FIND_PACKAGE(Boost COMPONENTS unit_test_framework)
-#IF(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-#  set(TESTING_IS_ENABLED "true")
-#  ENABLE_TESTING()
-#ELSE(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-#  message("Boost unit_test_framework not found, disabling testing")
-#ENDIF(Boost_UNIT_TEST_FRAMEWORK_FOUND)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 #put the version number into the version file and add the include directory in the build tree, where we put it
@@ -89,6 +83,19 @@ foreach( SCRIPT_WITH_PATH ${TEST_SCRIPTS} )
   add_test( ${TEST_NAME} ${PROJECT_BINARY_DIR}/${SCRIPT} )
 endforeach( SCRIPT_WITH_PATH )
 
+
+#
+# Enable code coverage when cmake build configured -DCMAKE_BUILD_TYPE=Debug.
+# lcov gets run by the target defined in Makefile.coverage
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  CONFIGURE_FILE(cmake/Makefile.coverage
+    ${PROJECT_BINARY_DIR}/Makefile.coverage @ONLY)
+  ADD_CUSTOM_TARGET(coverage
+    make -f Makefile.coverage
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating test coverage documentation" VERBATIM
+  )
+ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 
 # The instructions to create a debian package are loaded from a separate file

@@ -74,14 +74,17 @@ MACRO (COPY_CONTENT_TO_BUILD_DIR directories)
     # contents to the ${PROJECT_BINARY_DIR}. PLUS take care not to select backup
     # files in the script folder?
     foreach( directory ${directories} )
+
         FILE( GLOB list_of_files_to_copy
-            "${CMAKE_SOURCE_DIR}/${directory}/*[!~].*" ) # basically add any file
-            # with an extension to the  list we are building. The [!~] in the
-            # globbing expression  specifies
-            # that we do not want files with structure -
-            # abc~.txt/abc~.sh/abc~.py inside the list we are building
-            # The list contains the absolute paths to the files in the globbed
-            # directory.
+            "${CMAKE_SOURCE_DIR}/${directory}/*.sh"
+            "${CMAKE_SOURCE_DIR}/${directory}/*.py" 
+            "${CMAKE_SOURCE_DIR}/${directory}/*.dmap" 
+            "${CMAKE_SOURCE_DIR}/${directory}/*.map" 
+            "${CMAKE_SOURCE_DIR}/${directory}/*.txt") 
+            #"${CMAKE_SOURCE_DIR}/${directory}/*[!~].*" ) <- this was the
+            # globbing expression  before. Had to not use this because it was
+            # letting in vim's .swp file (another back up file). For now
+            # explicitly defining extentions we allow
             COPY_FILES_TO_BUILD_DIRECTORY( "${list_of_files_to_copy}" )
     endforeach( directory )
 ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
@@ -110,10 +113,12 @@ ENDMACRO( ADD_SCRIPTS_AS_TESTS )
 ##################### END MACRO DEFENITIONS #####################################
 
 COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts;tests/dMapFiles")
-
 # prepare a list with names of scripts
-FILE(GLOB location_of_script_files "${CMAKE_SOURCE_DIR}/tests/scripts/*[!~].*")
+FILE(GLOB location_of_script_files 
+    "${CMAKE_SOURCE_DIR}/tests/scripts/*.py"
+    "${CMAKE_SOURCE_DIR}/tests/scripts/*.sh")
 ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )
+
 
 #
 # Enable code coverage when cmake build configured -DCMAKE_BUILD_TYPE=Debug.

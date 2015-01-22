@@ -1,0 +1,11 @@
+
+Available devices: 
+
+Name	Device			Map-File			Firmware	Revision
+DUMMY1	/dev/mtcadummys0		./mtcadummy.map	na		na
+DUMMY2	/dev/mtcadummys1		./mtcadummy_bad.map	na		na
+DUMMY3	/dev/mtcadummys2		./mtcadummy_bad.map	na		na
+DUMMY4	/dev/mtcadummys3		./mtcadummy_bad.map	na		na
+DUMMY5	/dev/llrfdummys4		./mtcadummy.map	na		na
+DUMMY6	/dev/doesNotExist		./mtcadummy.map	na		na
+

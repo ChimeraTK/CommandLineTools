@@ -17,7 +17,6 @@ include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
@@ -60,29 +59,61 @@ install(TARGETS mtca4u
 
 ENABLE_TESTING()
 
-#copy the reference output texts needed for testing
-FILE(GLOB REFERENCE_TEXTS ${CMAKE_SOURCE_DIR}/tests/referenceTexts/*.txt )
-message("referenceTexts ${referenceTexts}")
-foreach( REFERENCE_FILE_WITH_PATH ${REFERENCE_TEXTS} )
-  get_filename_component( REFERENCE_FILE ${REFERENCE_FILE_WITH_PATH} NAME )
-  configure_file( ${REFERENCE_FILE_WITH_PATH} ${PROJECT_BINARY_DIR}/${REFERENCE_FILE} copyonly)
-endforeach( REFERENCE_FILE_WITH_PATH )
+#############################################################################
+# MACRO Defenitions:
+#############################################################################
 
-#add all tests
-#Little hack: Each type of script has to be added separately.
-#Without .sh it would also pick up backupfiles .sh~ etc.
-FILE(GLOB SHELL_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts/*.sh )
-FILE(GLOB PYTHON_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts/*.py )
-FILE(GLOB TEST_SCRIPTS ${SHELL_SCRIPTS} ${PYTHON_SCRIPTS})
-foreach( SCRIPT_WITH_PATH ${TEST_SCRIPTS} )
-  get_filename_component( SCRIPT ${SCRIPT_WITH_PATH} NAME )
-  configure_file( ${SCRIPT_WITH_PATH} ${PROJECT_BINARY_DIR}/${SCRIPT} copyonly)
-  #strip the extension from the scripts name to use it as a test name
-  #NAME_WE means the base name without path and (longest) extension
-  get_filename_component( TEST_NAME ${SCRIPT} NAME_WE)
-  add_test( ${TEST_NAME} ${PROJECT_BINARY_DIR}/${SCRIPT} )
-endforeach( SCRIPT_WITH_PATH )
+# This macro is currently written to copy files with extensions from the
+# provided source directories 
+# into the project build directory. The source directories can be specified as a
+# ; seperated list. The macro currently filters out editor back up files (eg.
+# abc~.txt. More formats that need to be filtered may be added by modifying the
+# globbiong expression
+MACRO (COPY_CONTENT_TO_BUILD_DIR directories)
+    # Here we should iterate through the directories provided and copy all
+    # contents to the ${PROJECT_BINARY_DIR}. PLUS take care not to select backup
+    # files in the script folder?
+    foreach( directory ${directories} )
+        FILE( GLOB list_of_files_to_copy
+            "${CMAKE_SOURCE_DIR}/${directory}/*[!~].*" ) # basically add any file
+            # with an extension to the  list we are building. The [!~] in the
+            # globbing expression  specifies
+            # that we do not want files with structure -
+            # abc~.txt/abc~.sh/abc~.py inside the list we are building
+            # The list contains the absolute paths to the files in the globbed
+            # directory.
+            COPY_FILES_TO_BUILD_DIRECTORY( "${list_of_files_to_copy}" )
+    endforeach( directory )
+ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
 
+#
+# Helper macro for COPY_CONTENT_TO_BUILD_DIR.
+# The list_of_files is expected to be filenames with absolute paths each
+# (entry) seperated by a ;i in case of multiple entries.
+MACRO( COPY_FILES_TO_BUILD_DIRECTORY list_of_files )
+    foreach( file ${list_of_files} )
+        configure_file( ${file} ${PROJECT_BINARY_DIR} copyonly )
+    endforeach( file )
+ENDMACRO( COPY_FILES_TO_BUILD_DIRECTORY )
+
+# TODO: Rework structure later
+MACRO( ADD_SCRIPTS_AS_TESTS list_of_scripts )
+    foreach( script_path ${list_of_scripts} )
+        get_filename_component(script_name_with_extension ${script_path} NAME)
+        get_filename_component(test_name ${script_path} NAME_WE)
+        add_test( ${test_name}
+            ${PROJECT_BINARY_DIR}/${script_name_with_extension} ) # TODO: Rework this
+        # later to allow macro to accept script location as an argument
+    endforeach( script_path )
+ENDMACRO( ADD_SCRIPTS_AS_TESTS )
+
+##################### END MACRO DEFENITIONS #####################################
+
+COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts;tests/dMapFiles")
+
+# prepare a list with names of scripts
+FILE(GLOB location_of_script_files "${CMAKE_SOURCE_DIR}/tests/scripts/*[!~].*")
+ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )
 
 #
 # Enable code coverage when cmake build configured -DCMAKE_BUILD_TYPE=Debug.

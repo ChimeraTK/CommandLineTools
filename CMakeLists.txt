@@ -97,7 +97,7 @@ MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
         "${source_directory}/*[!~].py" # <- filter out abc~.py
         "${source_directory}/*.dmap" 
         "${source_directory}/*.map" 
-        "$${source_directory}/*.txt") 
+        "${source_directory}/*.txt") 
     foreach( file ${list_of_files_to_copy} )
         configure_file( ${file} ${target_directory} copyonly )
     endforeach( file )

@@ -1,12 +1,20 @@
 
 #!/bin/bash
 
-./mtca4u "device_info" "DUMMY1" > output_mtca4uDeviceInfo.txt  2>&1 # redirect
-# all output to file 
+# NOTE: Paths specified below, assume the working directory is the build
+# directory
+mtca4u_executable=./mtca4u
+actual_console_output="./output_mtca4uDeviceInfo.txt"
+expected_console_output="./referenceTexts/referenceMtca4uDeviceInfo.txt"
+
+mtca4u_command="$mtca4u_executable device_info DUMMY1"
+
+$mtca4u_command > $actual_console_output  2>&1 # redirect
+                                               # both stderr and stdout to file 
 
 if [ $? -ne 0 ] ; then # 0 is the exit status for a successful command
     exit -1
 fi 
 
-diff output_mtca4uDeviceInfo.txt referenceMtca4uDeviceInfo.txt
+diff $actual_console_output $expected_console_output
 

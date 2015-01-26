@@ -74,7 +74,7 @@ ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
 # For directory specified in the directory parameter, the macro creates
 #  a sub-directory in the project build directory. It populates this new
 # sub-directory with the content of the source directory. Eg:
-# <CMAKE_SOURCE_DIR>a/b/source_dir as input creates
+# <CMAKE_SOURCE_DIR>/a/b/source_dir as input creates
 # <project_build_dir>/source_dir and will have .txt, .sh, .py, .dmap and .map
 # files from the source directory. 
 MACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY directory )
@@ -88,8 +88,8 @@ MACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY directory )
 ENDMACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY )
 
 
-# The macro currently filters out the editor back up files that end with ~ from
-# the source directory. The macro picks up only these specified formats from the
+# The macro currently filters out the editor back up files that end with ~ .
+# The macro picks up only these specified formats from the
 # source directory : .dmap, .map, .txt, .py, .sh. New formats formats may be added by 
 # modifying the globbing expression
 MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
@@ -117,7 +117,7 @@ COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts")
 
 # Not copying the dmap files to its own sub directory, as the
 # mtca4u  executable currently requires the dMap file to be present in the
-# current directory.  Might reconsider copying dMap content into its own
+# executable directory.  Might reconsider copying dMap content into its own
 # subdirectory, once code can load a dMapfile from any location. 
 set(dmap_source_directory "${CMAKE_SOURCE_DIR}/tests/dMapFiles" ) 
 COPY_SOURCE_TO_TARGET(${dmap_source_directory} ${PROJECT_BINARY_DIR})

@@ -65,58 +65,67 @@ ENABLE_TESTING()
 
 # This macro is currently written to copy files with extensions from the
 # provided source directories 
-# into the project build directory. The source directories can be specified as a
-# ; seperated list. The macro currently filters out editor back up files (eg.
-# abc~.txt. More formats that need to be filtered may be added by modifying the
-# globbiong expression
+# into sperate sub directories in the the project build directory. 
+# The source directories can be specified as a ; seperated list. 
 MACRO (COPY_CONTENT_TO_BUILD_DIR directories)
     # Here we should iterate through the directories provided and copy all
-    # contents to the ${PROJECT_BINARY_DIR}. PLUS take care not to select backup
-    # files in the script folder?
+    # contents to ${PROJECT_BINARY_DIR}/parent_directory_of_given_path. 
     foreach( directory ${directories} )
-
-        FILE( GLOB list_of_files_to_copy
-            "${CMAKE_SOURCE_DIR}/${directory}/*.sh"
-            "${CMAKE_SOURCE_DIR}/${directory}/*.py" 
-            "${CMAKE_SOURCE_DIR}/${directory}/*.dmap" 
-            "${CMAKE_SOURCE_DIR}/${directory}/*.map" 
-            "${CMAKE_SOURCE_DIR}/${directory}/*.txt") 
-            #"${CMAKE_SOURCE_DIR}/${directory}/*[!~].*" ) <- this was the
-            # globbing expression  before. Had to not use this because it was
-            # letting in vim's .swp file (another back up file). For now
-            # explicitly defining extentions we allow
-            COPY_FILES_TO_BUILD_DIRECTORY( "${list_of_files_to_copy}" )
+        SETUP_CONTENT_IN_BUILD_DIRECTORY( "${directory}" )
     endforeach( directory )
 ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
 
-#
-# Helper macro for COPY_CONTENT_TO_BUILD_DIR.
-# The list_of_files is expected to be filenames with absolute paths each
-# (entry) seperated by a ;i in case of multiple entries.
-MACRO( COPY_FILES_TO_BUILD_DIRECTORY list_of_files )
-    foreach( file ${list_of_files} )
-        configure_file( ${file} ${PROJECT_BINARY_DIR} copyonly )
-    endforeach( file )
-ENDMACRO( COPY_FILES_TO_BUILD_DIRECTORY )
 
-# TODO: Rework structure later
-MACRO( ADD_SCRIPTS_AS_TESTS list_of_scripts )
-    foreach( script_path ${list_of_scripts} )
-        get_filename_component(script_name_with_extension ${script_path} NAME)
+MACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY directory )
+    get_filename_component(parent_directory ${directory} NAME) # Kind of a hack
+    # as we are actually picking the directory name and not the filename.
+    # (because ${directory} contains path to a directory and not a file)
+    set(source_directory "${CMAKE_SOURCE_DIR}/${directory}" )
+    set(target_directory "${PROJECT_BINARY_DIR}/${parent_directory}")
+    file( MAKE_DIRECTORY "${target_directory}" )
+    COPY_SOURCE_TO_TARGET( ${source_directory} ${target_directory} )
+ENDMACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY )
+
+
+# The macro currently filters out editor back up files for the
+# shell scripts used for testing(eg.
+# abc~.sh, abc~.py etc) and only picks up these formats: .dmap, .map, .txt. More
+# formats may be added by modifying the globbing expression
+MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
+    FILE( GLOB list_of_files_to_copy
+        "${source_directory}/*[!~].sh" # <- filter out abc~.sh
+        "${source_directory}/*[!~].py" # <- filter out abc~.py
+        "${source_directory}/*.dmap" 
+        "${source_directory}/*.map" 
+        "$${source_directory}/*.txt") 
+    foreach( file ${list_of_files_to_copy} )
+        configure_file( ${file} ${target_directory} copyonly )
+    endforeach( file )
+ENDMACRO( COPY_SOURCE_TO_TARGET )
+
+MACRO( ADD_SCRIPTS_AS_TESTS list_of_script_files )
+    foreach( script_path ${list_of_script_files} )
         get_filename_component(test_name ${script_path} NAME_WE)
-        add_test( ${test_name}
-            ${PROJECT_BINARY_DIR}/${script_name_with_extension} ) # TODO: Rework this
-        # later to allow macro to accept script location as an argument
+        add_test( ${test_name} ${script_path} )
     endforeach( script_path )
 ENDMACRO( ADD_SCRIPTS_AS_TESTS )
 
 ##################### END MACRO DEFENITIONS #####################################
 
-COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts;tests/dMapFiles")
+COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts")
+
+# Not copying the dmap files to its own sub directory in the build directory as the
+# mtca4u  executable currently requires the dMap file to be present in the
+# current directory.  Might reconsider copying dMap content into its own
+# subdirectory, once code can load a dMapfile from any location. 
+set(dmap_source_directory "${CMAKE_SOURCE_DIR}/tests/dMapFiles" ) 
+COPY_SOURCE_TO_TARGET(${dmap_source_directory} ${PROJECT_BINARY_DIR})
+
+
 # prepare a list with names of scripts
 FILE(GLOB location_of_script_files 
-    "${CMAKE_SOURCE_DIR}/tests/scripts/*.py"
-    "${CMAKE_SOURCE_DIR}/tests/scripts/*.sh")
+    "${PROJECT_BINARY_DIR}/scripts/*.py"
+    "${PROJECT_BINARY_DIR}/scripts/*.sh")
 ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )
 
 

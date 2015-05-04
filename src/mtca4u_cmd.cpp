@@ -22,8 +22,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "version.h"
-
 using namespace mtca4u;
 using namespace std;
 
@@ -41,9 +39,11 @@ struct Command {
 };
 
 void PrintHelp(unsigned int, const char **);
+void getVersion(unsigned int, const char **);
 void getInfo(unsigned int, const char **);
 void getDeviceInfo(unsigned int, const char **);
 void getRegisterInfo(unsigned int, const char **);
+void getRegisterSize(unsigned int, const char **);
 void readRegister(unsigned int, const char **);
 void writeRegister(unsigned int, const char **);
 void readDmaRawData(unsigned int, const char **);
@@ -51,13 +51,15 @@ void readDmaChannel(unsigned int, const char **);
 
 vector<Command> vectorOfCommands = {
   Command("help",&PrintHelp,"Prints the help text","\t\t\t\t"),
+  Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
   Command("info",&getInfo,"Prints all devices","\t\t\t\t"),
-  Command("device_info",&getDeviceInfo,"Prints the register of devices","BoardName\t\t"),
-  Command("register_info",&getRegisterInfo,"Prints the register infos","BoardName Reg\t\t"),
-  Command("read",&readRegister,"Read data from Board", "\tBoardName Reg [raw | hex]"),
-  Command("write",&writeRegister,"Write data to Board", "\tBoardName Reg Value\t"),
-  Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "BoardName Sample [Channel] [Mode] [Singed] [Bit] [FracBit]"),
-  Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "BoardName Sample [Mode] [Singed] [Bit] [FracBit]\t")
+  Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t"),
+  Command("register_info",&getRegisterInfo,"Prints the register infos","Board Module Register \t\t"),
+  Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
+  Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [raw | hex]"),
+  Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value\t"),
+  Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
+  Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]")
 };
 
 /**
@@ -154,7 +156,7 @@ devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName =
  */
 void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
 {
-  cout << endl << "mtca4u command line tools, version " << command_line_tools::VERSION << "\n" << endl;
+  cout << endl << "mtca4u command line tools, version " << 0 << "\n" << endl;
   cout << "Available commands are:" << endl << endl;
 
   for (vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it)
@@ -162,6 +164,18 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
     cout << "  " << it->Name << "\t" << it->Example << "\t" << it->Description << endl;
   }    
   cout << endl << endl << "For further help or bug reports please contact michael.heuer@desy.de" << endl << endl; 
+}
+
+/**
+ * @brief getVersion shows the command line tools version
+ *
+ * @param[in] argc Number of additional parameter
+ * @param[in] argv Pointer to additional parameter
+ *
+ */
+void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
+{ 
+  cout << 0 << std::endl;
 }
 
 /**
@@ -221,9 +235,16 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   
   devMap<devPCIE> device = getDevice(argv[0]);
 
-  // ToDo: Implement!
-  cout << "Not Implemented yet." << endl;
- }
+  boost::shared_ptr<const mtca4u::mapFile> map = device.getRegisterMap();
+
+  cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
+
+  unsigned int index = 0;
+  for (std::vector<mapFile::mapElem>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
+    cout << cit->reg_name.c_str() << "\t" << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
+    cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
+  }
+}
 
 /**
  * @brief getRegisterInfo shows the register information
@@ -234,11 +255,11 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
  */
 void getRegisterInfo(unsigned int argc, const char *argv[])
 {
-  if(argc < 2)
+  if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
 
   devMap<devPCIE> device = getDevice(argv[0]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[1]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
   
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
@@ -248,25 +269,45 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
 }
 
 /**
+ * @brief getRegisterInfo shows the register information
+ *
+ * @param[in] argc Number of additional parameter
+ * @param[in] argv Pointer to additional parameter
+ *
+ */
+void getRegisterSize(unsigned int argc, const char *argv[])
+{
+  if(argc < 3)
+    throw exBase("Not enough input arguments.", 1);
+
+  devMap<devPCIE> device = getDevice(argv[0]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
+
+  cout << reg.getRegisterInfo().reg_elem_nr << std::endl;
+}
+
+/**
  * @brief readRegister
  *
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter
  *
- * Parameter: device, register, [elements], [offset], [cmode]
+ * Parameter: device, module, register, [offset], [elements], [cmode]
  */
 void readRegister(unsigned int argc, const char* argv[])
 {
-  if(argc < 2)
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
+  
+  if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
   
-  devMap<devPCIE> device = getDevice(argv[0]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[1]);
+  devMap<devPCIE> device = getDevice(argv[pp_device]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
   
-  const uint32_t offset = (argc > 3) ? stoul(argv[3]) : 0;
-  const uint32_t elements = ((argc > 2) && (stoul(argv[2]) != 0)) ? stoul(argv[2]) : regInfo.reg_elem_nr - offset;
-  string cmode = (argc > 4) ? argv[4] : "double";
+  const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+  const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
+  string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   
   // Check the offset
   if (regInfo.reg_elem_nr < offset)
@@ -296,21 +337,23 @@ void readRegister(unsigned int argc, const char* argv[])
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter
  *
- * Parameter: device, register, value, [offset],
+ * Parameter: device, module, register, value, [offset]
  */
 void writeRegister(unsigned int argc, const char *argv[])
 {
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
+  
   if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
     
-  devMap<devPCIE> device = getDevice(argv[0]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[1]);
+  devMap<devPCIE> device = getDevice(argv[pp_device]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module],argv[pp_register]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
   std::vector<string> vS;
-  boost::split(vS, argv[2], boost::is_any_of("\t "));
+  boost::split(vS, argv[pp_value], boost::is_any_of("\t "));
 
-   const uint32_t offset = (argc > 3) ? stoul(argv[3]) : 0;
+   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
 
   vector<double> vD(vS.size());
   try {
@@ -332,47 +375,53 @@ void writeRegister(unsigned int argc, const char *argv[])
   * @param[in] nlhs Number of left hand side parameter
   * @param[inout] phls Pointer to the left hand side parameter
   *
-  * Parameter: device, sample, [dmode], [singed], [bit], [fracbit]
+  * Parameter: device, register, [offset], [elements], [mode], [singed], [bit], [fracbit]
   */
 void readDmaRawData(unsigned int argc, const char *argv[])
 {
-  if(argc < 2)
-    throw exBase("Not enough input arguments.", 1);
-    
-  devMap<devPCIE> device = getDevice(argv[0]);
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4;
+  const unsigned int pp_mode = 5, pp_signed = 6, pp_bit = 7, pp_fracbit = 8;
   
+  uint paramCount = 1; // used to count the valid converted Parameter
+  
+  if(argc < 3)
+    throw exBase("Not enough input arguments.", 1);
+
   try {
-    const uint32_t sample = stoul(argv[1]);
-	const uint32_t dmode = (argc > 2) ? stoul(argv[2]) : 32;
-    //string cmode = (argc > 3) ? argv[3] : "double";
-	const uint32_t signedFlag = (argc > 3) ? stoul(argv[3]) > 0 : false;
-	const uint32_t bits = (argc > 4) ? stoul(argv[4]) : dmode;
-    const uint32_t fracBits = (argc > 5) ? stoul(argv[5]) : 0;
-		
-    if (sample <= 0) // Prevent invalid inputs
-      throw exBase("Invalid number of sample.", 5);
-
-	//if ((cmode != "raw") && (cmode != "hex") && (cmode != "double"))
-	//  throw exBase("Invalid conversion mode.", 5);
-	  
-	//if (((cmode == "raw") || (cmode == "hex")) && (argc > 4)) 
-	//  throw exBase("Invalid conversion parameter.", 5);
-
-	if ((signedFlag != 0) && (signedFlag != 1))
-      throw exBase("Invalid signed Flag.", 5);
-	  
-	if ((dmode != 32) && (dmode != 16))
+    devMap<devPCIE> device = getDevice(argv[pp_device]);
+    devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module], argv[pp_register]);
+    mapFile::mapElem regInfo = reg.getRegisterInfo();
+  
+    const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+    paramCount++;
+    
+    const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : (regInfo.reg_elem_nr - offset);
+    paramCount++;
+        
+    const uint32_t dmode = (argc > pp_mode) ? stoul(argv[pp_mode]) : 32;
+    paramCount++;
+    
+    const uint32_t signedFlag = (argc > pp_signed) ? stoul(argv[pp_signed]) > 0 : false;
+    paramCount++;
+        
+    const uint32_t bits = (argc > pp_bit) ? stoul(argv[pp_bit]) : dmode;
+    paramCount++;
+    
+    const uint32_t fracBits = (argc > pp_fracbit) ? stoul(argv[pp_fracbit]) : 0;
+    paramCount++;
+    
+    if ((dmode != 32) && (dmode != 16))
       throw exBase("Invalid data mode.", 5);
-	  
-	FixedPointConverter conv(bits, fracBits, signedFlag);
+      
+    FixedPointConverter conv(bits, fracBits, signedFlag);
 	
-	if (dmode == 16)
-	{
-      vector<int16_t> values(sample);
-      device.readDMA("AREA_DMA", reinterpret_cast<int32_t*>(&values[0]), sample*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
+    if (dmode == 16)
+    {
+      vector<int16_t> values(elements);
+      reg.readDMA(reinterpret_cast<int32_t*>(&values[0]), elements*sizeof(int16_t), offset); // ToDo: add offset for different daq blocks
       // it is safe to cast sample to int because we checked the range before
-      for(unsigned int is = 0; is < static_cast<unsigned int>(sample); is++)
-	  {
+      for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
+    {
 	    //if (cmode == "hex")
 	    //  cout << std::hex << values[is] << endl;
 	    //else if (cmode == "raw")
@@ -382,10 +431,10 @@ void readDmaRawData(unsigned int argc, const char *argv[])
 	  }
 	}
 	else {
-      vector<int32_t> values(sample);
-      device.readDMA("AREA_DMA", &(values[0]), sample*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
+      vector<int32_t> values(elements);
+      reg.readDMA(&(values[0]), elements*sizeof(int32_t), offset); // ToDo: add offset for different daq blocks
       // it is safe to cast sample to int because we checked the range before
-      for(unsigned int is = 0; is < static_cast<unsigned int>(sample); is++)
+      for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
 	  {
 	    //if (cmode == "hex")
 	    //  cout << std::hex << values[is] << endl;
@@ -397,10 +446,14 @@ void readDmaRawData(unsigned int argc, const char *argv[])
 	}
   }
   catch(invalid_argument &ex) {
-    throw exBase("Could not convert parameter.",3);// + d + " to double: " + ex.what(), 3);
+    std::stringstream ss;
+    ss << "Could not convert parameter " << paramCount << ".";
+    throw exBase(ss.str(),3);// + d + " to double: " + ex.what(), 3);
   }
   catch(out_of_range &ex) {
-    throw exBase("Could not convert parameter.",4);// + d + " to double: " + ex.what(), 3);
+    std::stringstream ss;
+    ss << "Could not convert parameter " << paramCount << ".";
+    throw exBase(ss.str(),4);// + d + " to double: " + ex.what(), 3);
   }
 }
 
@@ -410,61 +463,91 @@ void readDmaRawData(unsigned int argc, const char *argv[])
   * @param[in] nlhs Number of left hand side parameter
   * @param[inout] phls Pointer to the left hand side parameter
   *
-  * Parameter: device, channel, sample, [dmode], [singed], [bit], [fracbit]
+  * Parameter: device, register, channel, [sample], [offset], [dmode], [singed], [bit], [fracbit]
   */
 void readDmaChannel(unsigned int argc, const char *argv[])
 {
-  if(argc < 3)
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_channel = 3, pp_offset = 4, pp_elements = 5;
+  const unsigned int pp_channel_cnt = 6, pp_mode = 7, pp_signed = 8, pp_bit = 9, pp_fracbit = 10;
+  
+  uint paramCount = 1; // used to count the valid converted Parameter
+  
+  if(argc < 4)
     throw exBase("Not enough input arguments.", 1);
     
-  devMap<devPCIE> device = getDevice(argv[0]);
+  devMap<devPCIE> device = getDevice(argv[pp_device]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module],argv[pp_register]);
+  mapFile::mapElem regInfo = reg.getRegisterInfo();
   
   try {
-    const uint32_t sample = stoul(argv[1]);
-	const uint32_t channel = stoul(argv[2]);
-    const uint32_t mode = (argc > 3) ? stoul(argv[3]) : 32;
-	const uint32_t signedFlag = (argc > 4) ? stoul(argv[4]) : 0;
-	const uint32_t bits = (argc > 5) ? stoul(argv[5]) : mode;
-    const uint32_t fracBits = (argc > 6) ? stoul(argv[6]) : 0;
-	
+	  const uint32_t channel = stoul(argv[pp_channel]);
+    paramCount++;
+    
+    const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+    paramCount++;
+
+    const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : (regInfo.reg_elem_nr - offset);
+    paramCount++;
+
+    const uint32_t channel_cnt = (argc > pp_channel_cnt) ? stoul(argv[pp_channel_cnt]) : 8;
+    paramCount++;
+
+    const uint32_t mode = (argc > pp_mode) ? stoul(argv[pp_mode]) : 32;
+    paramCount++;
+
+    const uint32_t signedFlag = (argc > pp_signed) ? stoul(argv[pp_signed]) : 0;
+    paramCount++;
+
+    const uint32_t bits = (argc > pp_bit) ? stoul(argv[pp_bit]) : mode;
+    paramCount++;
+
+    const uint32_t fracBits = (argc > pp_fracbit) ? stoul(argv[pp_fracbit]) : 0;
+
+    if ((signedFlag != 0) && (signedFlag != 1))
+      throw exBase("Invalid signed Flag.", 5);
+
+    if ((mode != 32) && (mode != 16))
+      throw exBase("Invalid data mode.", 5);
+
+    FixedPointConverter conv(bits, fracBits, signedFlag);
+
+    // FIXME
+    const uint32_t sample = elements / channel_cnt;
+    paramCount++;
+
     if (sample <= 0) // Prevent invalid inputs
       throw exBase("Invalid number of sample.", 5);
-	  
-	if ((signedFlag != 0) && (signedFlag != 1))
-        throw exBase("Invalid signed Flag.", 5);
-	  
-	if ((mode != 32) && (mode != 16))
-        throw exBase("Invalid data mode.", 5);
-		
-	FixedPointConverter conv(bits, fracBits, signedFlag);
-	
-    const uint32_t totalChannels = (mode == 32) ? 8 : 16;
-	
-    if (channel >= totalChannels)
+
+    if (channel >= channel_cnt)
         throw exBase("Invalid channel.", 5);
 
-    const uint32_t size = sample*totalChannels;
+    const uint32_t size = sample*channel_cnt;
+    
 	
 	if (mode == 16)
 	{
       vector<int16_t> values(size);
-      device.readDMA("AREA_DMA", reinterpret_cast<int32_t*>(&values[0]), size*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
+      reg.readDMA(reinterpret_cast<int32_t*>(&values[0]), size*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
       // it is safe to cast size to int because we checked the range before
-      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += totalChannels)
+      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
           cout << conv.toDouble(values[is]) << endl;
 	}
 	else {
       vector<int32_t> values(size);
-      device.readDMA("AREA_DMA", &(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
+      reg.readDMA(&(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
       // it is safe to cast size to int because we checked the range before
-      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += totalChannels)
+      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
           cout << conv.toDouble(values[is]) << endl;
 	}
   }
   catch(invalid_argument &ex) {
-    throw exBase("Could not convert parameter.",3);// + d + " to double: " + ex.what(), 3);
+    std::stringstream ss;
+    ss << "Could not convert parameter " << paramCount << ".";
+    throw exBase(ss.str(),3);// + d + " to double: " + ex.what(), 3);
   }
   catch(out_of_range &ex) {
-    throw exBase("Could not convert parameter.",4);// + d + " to double: " + ex.what(), 3);
+    std::stringstream ss;
+    ss << "Could not convert parameter " << paramCount << ".";
+    throw exBase(ss.str(),4);// + d + " to double: " + ex.what(), 3);
   }
 }

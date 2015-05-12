@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # NOTE: Paths specified below, assume the working directory is the build

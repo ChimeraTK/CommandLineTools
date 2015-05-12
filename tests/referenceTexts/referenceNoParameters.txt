@@ -1,17 +1,19 @@
 Not enough input arguments. Please find usage instructions below.
 
-mtca4u command line tools, version IRRELEVANT
+mtca4u command line tools, version 0
 
 Available commands are:
 
   help						Prints the help text
+  version						Prints the tools version
   info						Prints all devices
-  device_info	BoardName			Prints the register of devices
-  register_info	BoardName Reg			Prints the register infos
-  read		BoardName Reg [raw | hex]	Read data from Board
-  write		BoardName Reg Value		Write data to Board
-  read_dma	BoardName Sample [Channel] [Mode] [Singed] [Bit] [FracBit]	Read DMA Channel from Board
-  read_dma_raw	BoardName Sample [Mode] [Singed] [Bit] [FracBit]		Read DMA Area from Board
+  device_info	Board Module			Prints the register of devices
+  register_info	Board Module Register 			Prints the register infos
+  register_size	Board Module Register 			Prints the register infos
+  read		Board Module Register [raw | hex]	Read data from Board
+  write		Board Module Register Value		Write data to Board
+  read_dma_raw	Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]		Read DMA Area from Board
+  read_dma	Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]	Read DMA Channel from Board
 
 
 For further help or bug reports please contact michael.heuer@desy.de

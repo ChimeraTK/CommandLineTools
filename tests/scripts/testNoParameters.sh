@@ -13,7 +13,6 @@ $mtca4u_command &> output.txt # Both stdout and stderr
                        # this command right now prints to both streams. TODO:
                        # Revisit this piping once code is revised.
 if [ $? -ne 1 ] ; then
-    echo mtca4u reported the wrong error code.
     exit -1
 fi 
 

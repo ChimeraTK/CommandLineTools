@@ -347,7 +347,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
     
   devMap<devPCIE> device = getDevice(argv[pp_device]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module],argv[pp_register]);
+  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
   std::vector<string> vS;

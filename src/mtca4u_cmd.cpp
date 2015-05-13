@@ -310,7 +310,7 @@ void readRegister(unsigned int argc, const char* argv[])
   string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   
   // Check the offset
-  if (regInfo.reg_elem_nr < offset)
+  if (regInfo.reg_elem_nr <= offset)
    throw exBase("Offset exceed register size.", 1);
   
   // Read as raw values

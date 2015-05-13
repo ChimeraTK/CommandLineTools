@@ -358,10 +358,17 @@ void writeRegister(unsigned int argc, const char *argv[])
   devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
+  // TODO: Consider extracting this snippet to a helper method as we use the
+  // same check in read command as well
+  const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+  if (regInfo.reg_elem_nr <= offset){
+      throw exBase("Offset exceed register size.", 1);
+  }
+
   std::vector<string> vS;
   boost::split(vS, argv[pp_value], boost::is_any_of("\t "));
 
-   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+
 
   vector<double> vD(vS.size());
   try {

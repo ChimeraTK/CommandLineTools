@@ -25,6 +25,8 @@ Writing 1 element to WORD_CLK_MUX from offset 6 <- invalid offset
 Offset exceed register size.
 Writing 1 element to WORD_CLK_MUX from offset -5 <- invalid offset
 Offset exceed register size.
+invoke command with bad values
+Could not convert parameter to double.
 invoke command with no values to write
 Not enough input arguments.
 invoke command with incomplete parameters

@@ -351,7 +351,7 @@ void writeRegister(unsigned int argc, const char *argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
   
-  if(argc < 3)
+  if(argc < 4)
     throw exBase("Not enough input arguments.", 1);
     
   devMap<devPCIE> device = getDevice(argv[pp_device]);

@@ -1,13 +1,3 @@
-read with no default arguments in board without modules
-7.00000000e+00
-8.00000000e+00
-9.00000000e+00
-1.00000000e+01
-read with no default arguments in board with modules
-1.10000000e+01
-1.20000000e+01
-1.30000000e+01
-1.40000000e+01
 read DMA region - board_withoutModules
 0.00000000e+00
 1.00000000e+00
@@ -60,6 +50,16 @@ read DMA region - board_withModules
 4.84000000e+02
 5.29000000e+02
 5.76000000e+02
+read with no default arguments in board without modules
+7.00000000e+00
+8.00000000e+00
+9.00000000e+00
+1.00000000e+01
+read with no default arguments in board with modules
+1.10000000e+01
+1.20000000e+01
+1.30000000e+01
+1.40000000e+01
 read WORD_CLK_MUX from offset 2
 9.00000000e+00
 1.00000000e+01
@@ -94,3 +94,5 @@ uint representation for Raw Value
 12
 13
 14
+Command called with not enough arguments
+Not enough input arguments.

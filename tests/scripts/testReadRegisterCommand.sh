@@ -21,6 +21,15 @@ $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX 7$'\t'8$'\t'9$'\t'10 >> $actual
 $mtca4u_executable write  DUMMY2 ADC WORD_CLK_MUX 11$'\t'12$'\t'13$'\t'14 >> $actual_console_output 2>&1
 #---------------------------------
 
+# Read elements from the DMA region. If this works in returning the parabolic
+# values (provided card in a sanitized state), basic read works. Remaing tests
+# on WORD_CLK_MUX are for testing the other aspects of read
+echo "read DMA region - board_withoutModules" >> $actual_console_output 
+bash -c '$0 read DUMMY1 ""  AREA_DMAABLE 0 25 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+
+echo "read DMA region - board_withModules" >> $actual_console_output
+bash -c '$0 read DUMMY2 ADC  AREA_DMAABLE 0 25 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+
 # read with no default arguments in board without/with modules
 # write to WORF_CLK_MUX and read it in
 echo "read with no default arguments in board without modules" >> $actual_console_output 
@@ -33,12 +42,7 @@ echo "read with no default arguments in board with modules" >> $actual_console_o
 bash -c '$0 read DUMMY2 ADC WORD_CLK_MUX >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 
-# Read elements from the DMA region
-echo "read DMA region - board_withoutModules" >> $actual_console_output 
-bash -c '$0 read DUMMY1 ""  AREA_DMAABLE 0 25 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
-echo "read DMA region - board_withModules" >> $actual_console_output
-bash -c '$0 read DUMMY2 ADC  AREA_DMAABLE 0 25 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 # read with offset - valid/invalid
 echo "read WORD_CLK_MUX from offset 2" >> $actual_console_output
@@ -72,5 +76,8 @@ bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 4 hex >> $1  2>&1' $mtca4u_executabl
 echo "uint representation for Raw Value" >> $actual_console_output
 bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 4 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
+# not enough arguments
+echo "Command called with not enough arguments" >> $actual_console_output
+bash -c '$0 read DUMMY2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 diff $actual_console_output $expected_console_output

@@ -306,13 +306,21 @@ void readRegister(unsigned int argc, const char* argv[])
   mapFile::mapElem regInfo = reg.getRegisterInfo();
   
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-  const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
-  string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
-  
   // Check the offset
   if (regInfo.reg_elem_nr <= offset)
    throw exBase("Offset exceed register size.", 1);
   
+  const int32_t elements = (argc > pp_elements) ? stoll(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
+  if(elements < 0) {
+      throw exBase("numberOfelements to read out cannot be a negative value", 1);
+  } else if(static_cast<uint32_t>(elements) >  regInfo.reg_elem_nr){
+      // Checking for user entered size at this point, because we do not want to
+      // run vector<int32_t/double> values(elements) with a huge value in
+      // elements (can lead to mem allocation failure if too big).
+      throw exBase("Data size exceed register size.", 1);
+  }
+
+  string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   // Read as raw values
   if((cmode == "raw") || (cmode == "hex"))
   {

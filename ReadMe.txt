@@ -18,7 +18,7 @@ $ cmake ..
    In case mtca4u is not installed as a system library you probably have
    to define the path to MtcaMappedDevice
 
-$ cmake .. -DMtcaMappedDeviceDir=${HOME}/mtca4u/00.14.00/MtcaMappedDevice/00.11.00
+$ cmake .. -DMtcaMappedDeviceDir=${HOME}/mtca4u/00.19.00/MtcaMappedDevice/00.15.00
 
    By default, the installation will happen to the bin directory of the
    source tree. If you want to specify a different directory, specify the

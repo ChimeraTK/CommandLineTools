@@ -338,7 +338,7 @@ void readRegister(unsigned int argc, const char* argv[])
   }
   else { // Read with automatic conversion to double
     vector<double> values(elements);  
-    reg.read(&(values[0]), elements, offset*4);
+    reg.read(&(values[0]), elements, offset);
     cout << std::scientific << std::setprecision(8);
     for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
       cout << values[d] << endl;

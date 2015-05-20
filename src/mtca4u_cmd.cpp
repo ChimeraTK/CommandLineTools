@@ -387,7 +387,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
-  reg.write(&(vD[0]), vD.size(), offset*4);
+  reg.write(&(vD[0]), vD.size(), offset);
 }
 
  /**

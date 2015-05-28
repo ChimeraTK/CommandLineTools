@@ -50,14 +50,14 @@ void readDmaRawData(unsigned int, const char **);
 void readDmaChannel(unsigned int, const char **);
 
 vector<Command> vectorOfCommands = {
-  Command("help",&PrintHelp,"Prints the help text","\t\t\t\t"),
+  Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
   Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
-  Command("info",&getInfo,"Prints all devices","\t\t\t\t"),
-  Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t"),
+  Command("info",&getInfo,"Prints all devices","\t\t\t\t\t"),
+  Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t\t"),
   Command("register_info",&getRegisterInfo,"Prints the register infos","Board Module Register \t\t"),
   Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
-  Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [raw | hex]"),
-  Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value\t"),
+  Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
+  Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
   Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
   Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]")
 };
@@ -156,7 +156,7 @@ devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName =
  */
 void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
 {
-  cout << endl << "mtca4u command line tools, version " << 0 << "\n" << endl;
+  cout << endl << "mtca4u command line tools, version " << 00.02.00 << "\n" << endl;
   cout << "Available commands are:" << endl << endl;
 
   for (vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it)
@@ -175,7 +175,7 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
  */
 void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
 { 
-  cout << 0 << std::endl;
+  cout << 00.02.00 << std::endl;
 }
 
 /**
@@ -241,14 +241,8 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 
   unsigned int index = 0;
   for (std::vector<mapFile::mapElem>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
-      // print out module name if present
-      if(cit->reg_module.empty()){
-	  cout << cit->reg_name.c_str() << "\t";
-      } else {
-	  cout << cit->reg_module << "." << cit->reg_name.c_str() << "\t";
-      }
-      cout << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
-      cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
+    cout << cit->reg_name.c_str() << "\t" << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
+    cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
 }
 
@@ -338,7 +332,7 @@ void readRegister(unsigned int argc, const char* argv[])
   }
   else { // Read with automatic conversion to double
     vector<double> values(elements);  
-    reg.read(&(values[0]), elements, offset);
+    reg.read(&(values[0]), elements, offset*4);
     cout << std::scientific << std::setprecision(8);
     for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
       cout << values[d] << endl;
@@ -387,7 +381,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
-  reg.write(&(vD[0]), vD.size(), offset);
+  reg.write(&(vD[0]), vD.size(), offset*4);
 }
 
  /**

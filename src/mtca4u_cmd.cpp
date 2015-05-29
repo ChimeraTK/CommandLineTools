@@ -243,7 +243,13 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 
   unsigned int index = 0;
   for (std::vector<mapFile::mapElem>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
-    cout << cit->reg_name.c_str() << "\t" << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
+    // print out module name if present
+    if(cit->reg_module.empty()){
+	cout << cit->reg_name.c_str() << "\t";
+    } else {
+	cout << cit->reg_module << "." << cit->reg_name.c_str() << "\t";
+    }
+    cout << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
     cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
 }
@@ -383,7 +389,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
-  reg.write(&(vD[0]), vD.size(), offset*4);
+  reg.write(&(vD[0]), vD.size(), offset);
 }
 
  /**

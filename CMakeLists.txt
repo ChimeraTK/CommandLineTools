@@ -44,6 +44,12 @@ configure_file(cmake/version.h.in
   "${PROJECT_BINARY_DIR}/include/version.h" @ONLY)
 include_directories(${PROJECT_BINARY_DIR}/include)
 
+# update revferenceVersionCommand.txt (used for testing) with the current version
+configure_file(cmake/referenceVersionCommand.txt.in
+  "${PROJECT_BINARY_DIR}/referenceTexts/referenceVersionCommand.txt")
+
+
+
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 target_link_libraries(mtca4u ${MtcaMappedDevice_LIBRARIES})    
 

@@ -22,6 +22,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "version.h"
+
 using namespace mtca4u;
 using namespace std;
 
@@ -156,7 +158,7 @@ devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName =
  */
 void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
 {
-  cout << endl << "mtca4u command line tools, version " << 00.02.00 << "\n" << endl;
+  cout << endl << "mtca4u command line tools, version " << command_line_tools::VERSION << "\n" << endl;
   cout << "Available commands are:" << endl << endl;
 
   for (vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it)
@@ -175,7 +177,7 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
  */
 void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
 { 
-  cout << 00.02.00 << std::endl;
+  cout << command_line_tools::VERSION << std::endl;
 }
 
 /**

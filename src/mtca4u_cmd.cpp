@@ -29,7 +29,7 @@ using namespace std;
 
 // Functions declaration
 
-devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName);
+devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
 
 // Command Function declarations and stuff
 
@@ -124,7 +124,7 @@ int main(int argc, const char* argv[])
  * @param[in] dmapFileName File to be loaded or all in the current directory if empty
  *
  */
-devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName = "")
+devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName = "")
 {
   dmapFilesParser filesParser(".");
   
@@ -141,12 +141,17 @@ devMap<devPCIE> getDevice(const string& deviceName, const string &dmapFileName =
       break;    
   }
   
-  if(it == filesParser.end())
-    throw exBase("Unknown device '" + deviceName + "'.", 2);
-    
-  devMap<devPCIE> tempDevice;
-  tempDevice.openDev(it->first.dev_file, it->first.map_file_name);
-  return tempDevice;        
+  boost::shared_ptr <mtca4u::devPCIE> pcieDevice (new mtca4u::devPCIE());
+  pcieDevice->openDev(it->first.dev_file);
+
+  // creating the mapped device and puuting an opened pcie device in it. By
+  // using devBase as the template argument, there is a flexibility of putting
+  // other kinds of devices inside this mapped device.
+  devMap<mtca4u::devBase> tempDevice;
+  tempDevice.openDev(pcieDevice, it->second);
+
+  return tempDevice;
+
 }
 
 /**
@@ -235,7 +240,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   if(argc < 1)
     throw exBase("Not enough input arguments.", 1);
   
-  devMap<devPCIE> device = getDevice(argv[0]);
+  devMap<devBase> device = getDevice(argv[0]);
 
   boost::shared_ptr<const mtca4u::mapFile> map = device.getRegisterMap();
 
@@ -266,8 +271,8 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
   if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
 
-  devMap<devPCIE> device = getDevice(argv[0]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
+  devMap<devBase> device = getDevice(argv[0]);
+  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
   
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
@@ -288,8 +293,8 @@ void getRegisterSize(unsigned int argc, const char *argv[])
   if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
 
-  devMap<devPCIE> device = getDevice(argv[0]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
+  devMap<devBase> device = getDevice(argv[0]);
+  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
 
   cout << reg.getRegisterInfo().reg_elem_nr << std::endl;
 }
@@ -309,8 +314,8 @@ void readRegister(unsigned int argc, const char* argv[])
   if(argc < 3)
     throw exBase("Not enough input arguments.", 1);
   
-  devMap<devPCIE> device = getDevice(argv[pp_device]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
+  devMap<devBase> device = getDevice(argv[pp_device]);
+  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
   
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
@@ -362,8 +367,8 @@ void writeRegister(unsigned int argc, const char *argv[])
   if(argc < 4)
     throw exBase("Not enough input arguments.", 1);
     
-  devMap<devPCIE> device = getDevice(argv[pp_device]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
+  devMap<devBase> device = getDevice(argv[pp_device]);
+  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
 
   // TODO: Consider extracting this snippet to a helper method as we use the
@@ -411,8 +416,8 @@ void readDmaRawData(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
 
   try {
-    devMap<devPCIE> device = getDevice(argv[pp_device]);
-    devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module], argv[pp_register]);
+    devMap<devBase> device = getDevice(argv[pp_device]);
+    devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module], argv[pp_register]);
     mapFile::mapElem regInfo = reg.getRegisterInfo();
   
     const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
@@ -498,8 +503,8 @@ void readDmaChannel(unsigned int argc, const char *argv[])
   if(argc < 4)
     throw exBase("Not enough input arguments.", 1);
     
-  devMap<devPCIE> device = getDevice(argv[pp_device]);
-  devMap<devPCIE>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module],argv[pp_register]);
+  devMap<devBase> device = getDevice(argv[pp_device]);
+  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
   mapFile::mapElem regInfo = reg.getRegisterInfo();
   
   try {
@@ -573,4 +578,35 @@ void readDmaChannel(unsigned int argc, const char *argv[])
     ss << "Could not convert parameter " << paramCount << ".";
     throw exBase(ss.str(),4);// + d + " to double: " + ex.what(), 3);
   }
+}
+
+/*
+ * parameters?
+ * ./mtca4u read_dma BOARD MODULE CHANNEL
+ * optional parameters
+ * ./mtca4u read_dma BOARD MODULE CHANNEL OFFSET NUMBEROFELEMENTS_TO_SPIT_OUT
+ *
+ */
+void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc, const char *argv[]){
+  const unsigned int pp_device = 0, pp_module = 1, pp_channel = 2, pp_offset = 3, pp_elements = 4;
+
+/*  devMap<devPCIE> device = gdetDevice(argv[pp_device]);
+  mapFile::mapElem regInfo = reg.getRegisterInfo();
+
+  // read the multiplexed DMA region
+  boost::shared_ptr<mapFile> registerMap = mapFileParser().parse(MAP_FILE_NAME);
+  boost::shared_ptr< devBase > ioDevice( new DummyDevice );
+  ioDevice->openDev( MAP_FILE_NAME );
+
+  // Why did you keep the register MAp outside???
+  boost::shared_ptr< MultiplexedDataAccessor< double > > deMuxedData =
+    MultiplexedDataAccessor<double>::createInstance( "FRAC_INT",
+						   TEST_MODULE_NAME,
+						   ioDevice,
+						   registerMap );*/
+
+
+  // offset check?
+  // NUMBER of Elements
+
 }

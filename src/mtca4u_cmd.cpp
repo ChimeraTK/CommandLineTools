@@ -19,6 +19,7 @@
 
 #include <MtcaMappedDevice/dmapFilesParser.h>
 #include <MtcaMappedDevice/devMap.h>
+#include <MtcaMappedDevice/MultiplexedDataAccessor.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -73,6 +74,7 @@ vector<Command> vectorOfCommands = {
  */
 int main(int argc, const char* argv[])
 {
+  std::cout<<argc<<std::endl;
   if(argc < 2) {
     cerr << "Not enough input arguments. Please find usage instructions below." << endl;
     PrintHelp(argc, argv);
@@ -590,20 +592,13 @@ void readDmaChannel(unsigned int argc, const char *argv[])
 void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc, const char *argv[]){
   const unsigned int pp_device = 0, pp_module = 1, pp_channel = 2, pp_offset = 3, pp_elements = 4;
 
-/*  devMap<devPCIE> device = gdetDevice(argv[pp_device]);
-  mapFile::mapElem regInfo = reg.getRegisterInfo();
+
 
   // read the multiplexed DMA region
-  boost::shared_ptr<mapFile> registerMap = mapFileParser().parse(MAP_FILE_NAME);
-  boost::shared_ptr< devBase > ioDevice( new DummyDevice );
-  ioDevice->openDev( MAP_FILE_NAME );
-
-  // Why did you keep the register MAp outside???
+  devMap<devBase> device = getDevice(argv[pp_device]);
   boost::shared_ptr< MultiplexedDataAccessor< double > > deMuxedData =
-    MultiplexedDataAccessor<double>::createInstance( "FRAC_INT",
-						   TEST_MODULE_NAME,
-						   ioDevice,
-						   registerMap );*/
+      device.getCustomAccessor< MultiplexedDataAccessor < double > >("", "");
+
 
 
   // offset check?

@@ -28,9 +28,14 @@
 using namespace mtca4u;
 using namespace std;
 
-// Functions declaration
+typedef MultiplexedDataAccessor<double> dma_Acessor;
+typedef boost::shared_ptr<dma_Acessor> dma_Acessor_ptr;
 
+// Functions declaration
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
+dma_Acessor_ptr getMultiplexedDataAccesor(const char *argv[]);
+void printDMAChannel (const dma_Acessor_ptr& deMuxedData, uint channel, uint offset, uint elements);
+void printAllDMAChannels(const dma_Acessor_ptr& deMuxedData);
 
 // Command Function declarations and stuff
 
@@ -589,19 +594,67 @@ void readDmaChannel(unsigned int argc, const char *argv[])
  * ./mtca4u read_dma BOARD MODULE CHANNEL OFFSET NUMBEROFELEMENTS_TO_SPIT_OUT
  *
  */
-void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc, const char *argv[]){
-  const unsigned int pp_device = 0, pp_module = 1, pp_channel = 2, pp_offset = 3, pp_elements = 4;
+void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc,
+                                                   const char *argv[]) {
+  const unsigned int pp_channel = 3, pp_offset = 4, pp_elements = 5;
 
+  if (argc < 4) {
+    throw exBase("Not enough input arguments.", 1);
+  }
 
+  dma_Acessor_ptr deMuxedData = getMultiplexedDataAccesor(argv);
+  uint sequenceLength = (*deMuxedData)[0].size();
 
-  // read the multiplexed DMA region
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  boost::shared_ptr< MultiplexedDataAccessor< double > > deMuxedData =
-      device.getCustomAccessor< MultiplexedDataAccessor < double > >("", "");
+  if (argc == 4) {
+     printAllDMAChannels(deMuxedData);
+  } else {
+    uint channel, offset, elements, paramCount = 4;
+    try {
+      channel =
+          (argc > pp_channel) ? std::stoul(argv[pp_channel]) : 0;
+      paramCount++;
+      offset = (argc > pp_offset) ? std::stoul(argv[pp_offset]) : 0;
+      paramCount++;
+      elements = (argc > pp_elements) ? stoul(argv[pp_elements])
+                                                 : sequenceLength - offset;
+      paramCount++;
 
+      if (offset >= sequenceLength) {
+        throw exBase("Offset exceed register size.", 1);
+      } else if (elements > sequenceLength) {
+        throw exBase("Data size exceed register size.", 1);
+      }
+    }
+    catch (invalid_argument &ex) {
+      std::stringstream ss;
+      ss << "Could not convert parameter " << paramCount << ".";
+      throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
+    }
+    catch (out_of_range &ex) {
+      std::stringstream ss;
+      ss << "Could not convert parameter " << paramCount << ".";
+      throw exBase(ss.str(), 4); // + d + " to double: " + ex.what(), 3);
+    }
+    printDMAChannel(deMuxedData, channel, offset, elements);
+  }
 
-
-  // offset check?
-  // NUMBER of Elements
 
 }
+
+dma_Acessor_ptr getMultiplexedDataAccesor(const char *argv[]) {
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2;
+  devMap<devBase> device = getDevice(argv[pp_device]);
+  dma_Acessor_ptr deMuxedData =
+      device.getCustomAccessor<dma_Acessor>(argv[pp_register], argv[pp_module]);
+  deMuxedData->read();
+  return deMuxedData;
+}
+
+void printDMAChannel(const dma_Acessor_ptr &deMuxedData, uint channel,
+                     uint offset, uint elements) {
+  std::cout << "Channel " << channel << ":" << std::endl;
+  for(int i = offset; i < )
+
+}
+
+void printAllDMAChannels(const dma_Acessor_ptr &deMuxedData) {}

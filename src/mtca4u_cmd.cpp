@@ -621,7 +621,7 @@ void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc,
 
       if (offset >= sequenceLength) {
         throw exBase("Offset exceed register size.", 1);
-      } else if (elements > sequenceLength) {
+      } else if (elements > (sequenceLength - offset)) {
         throw exBase("Data size exceed register size.", 1);
       }
     }
@@ -650,11 +650,22 @@ dma_Acessor_ptr getMultiplexedDataAccesor(const char *argv[]) {
   return deMuxedData;
 }
 
+// expects valid offset and num elements not exceeding sequence length
 void printDMAChannel(const dma_Acessor_ptr &deMuxedData, uint channel,
                      uint offset, uint elements) {
   std::cout << "Channel " << channel << ":" << std::endl;
-  for(int i = offset; i < )
-
+  for(uint i = offset; i < (offset + elements); i++ ){
+   std::cout << (*deMuxedData)[channel][i] << std::endl;
+  }
 }
 
-void printAllDMAChannels(const dma_Acessor_ptr &deMuxedData) {}
+void printAllDMAChannels(const dma_Acessor_ptr &deMuxedData) {
+  uint numSequences = deMuxedData->getNumberOfDataSequences();
+  uint seqLength = (*deMuxedData)[0].size();
+  for(uint seqCount = 0; seqCount < numSequences; seqCount++ ){
+      std::cout << "Channel " << seqCount << ":" << std::endl;
+      for(uint value = 0; value < seqLength; value++){
+	  std::cout << (*deMuxedData)[seqCount][value] << std::endl;
+      }
+  }
+}

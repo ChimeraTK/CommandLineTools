@@ -588,13 +588,6 @@ void readDmaChannel(unsigned int argc, const char *argv[])
   }
 }
 
-/*
- * parameters?
- * ./mtca4u read_dma BOARD MODULE CHANNEL
- * optional parameters
- * ./mtca4u read_dma BOARD MODULE CHANNEL OFFSET NUMBEROFELEMENTS_TO_SPIT_OUT
- *
- */
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int pp_seqNum = 3, pp_offset = 4, pp_elements = 5;
   if (argc < 3) {
@@ -603,6 +596,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 
   dma_Accessor_ptr deMuxedData = getFilledOutMultiplexedDataAccesor(argv);
   uint sequenceLength = (*deMuxedData)[0].size();
+  uint numSequences = (*deMuxedData).getNumberOfDataSequences();
 
   if (argc == 3) {
     printAllSequences(deMuxedData);
@@ -618,8 +612,12 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
       elements = (argc > pp_elements) ? stoul(argv[pp_elements])
                                       : sequenceLength - offset;
       paramCount++;
-
-      if (offset >= sequenceLength) {
+      if (seqNum >= numSequences) {
+        std::stringstream ss;
+        ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
+           << (numSequences - 1) << "]";
+        throw exBase(ss.str(), 1);
+      } else if (offset >= sequenceLength) {
         throw exBase("Offset exceed register size.", 1);
       } else if (elements > (sequenceLength - offset)) {
         throw exBase("Data size exceed register size.", 1);
@@ -642,15 +640,15 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]) {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2;
   devMap<devBase> device = getDevice(argv[pp_device]);
-  dma_Accessor_ptr deMuxedData =
-      device.getCustomAccessor<dma_Accessor>(argv[pp_register], argv[pp_module]);
+  dma_Accessor_ptr deMuxedData = device.getCustomAccessor<dma_Accessor>(
+      argv[pp_register], argv[pp_module]);
   deMuxedData->read();
   return deMuxedData;
 }
 
 // expects valid offset and num elements not exceeding sequence length
 void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
-                     uint offset, uint elements) {
+                   uint offset, uint elements) {
   std::cout << "Sequence " << sequence << ":" << std::endl;
   for (uint i = offset; i < (offset + elements); i++) {
     std::cout << (*deMuxedData)[sequence][i] << std::endl;

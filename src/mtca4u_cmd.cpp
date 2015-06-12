@@ -33,9 +33,9 @@ typedef boost::shared_ptr<dma_Accessor> dma_Accessor_ptr;
 
 // Functions declaration
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
-dma_Accessor_ptr getMultiplexedDataAccesor(const char *argv[]);
-void printDMAChannel (const dma_Accessor_ptr& deMuxedData, uint channel, uint offset, uint elements);
-void printAllDMAChannels(const dma_Accessor_ptr& deMuxedData);
+dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]);
+void printSequence (const dma_Accessor_ptr& deMuxedData, uint sequence, uint offset, uint elements);
+void printAllSequences(const dma_Accessor_ptr& deMuxedData);
 
 // Command Function declarations and stuff
 
@@ -56,6 +56,7 @@ void readRegister(unsigned int, const char **);
 void writeRegister(unsigned int, const char **);
 void readDmaRawData(unsigned int, const char **);
 void readDmaChannel(unsigned int, const char **);
+void readMultiplexedData(unsigned int , const char **);
 
 vector<Command> vectorOfCommands = {
   Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
@@ -67,7 +68,8 @@ vector<Command> vectorOfCommands = {
   Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
   Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
   Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
-  Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]")
+  Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]"),
+  Command("custom",&readMultiplexedData,"Read DMA Channel from Board", "Board Module Register [sequenceNumber] [Offset] [numElements]")
 };
 
 /**
@@ -79,7 +81,6 @@ vector<Command> vectorOfCommands = {
  */
 int main(int argc, const char* argv[])
 {
-  std::cout<<argc<<std::endl;
   if(argc < 2) {
     cerr << "Not enough input arguments. Please find usage instructions below." << endl;
     PrintHelp(argc, argv);
@@ -594,26 +595,26 @@ void readDmaChannel(unsigned int argc, const char *argv[])
  * ./mtca4u read_dma BOARD MODULE CHANNEL OFFSET NUMBEROFELEMENTS_TO_SPIT_OUT
  *
  */
-void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc,
-                                                   const char *argv[]) {
-  const unsigned int pp_channel = 3, pp_offset = 4, pp_elements = 5;
-
-  if (argc < 4) {
+void readMultiplexedData(unsigned int argc, const char *argv[]) {
+  const unsigned int pp_seqNum = 3, pp_offset = 4, pp_elements = 5;
+  if (argc < 3) {
     throw exBase("Not enough input arguments.", 1);
   }
 
-  dma_Accessor_ptr deMuxedData = getMultiplexedDataAccesor(argv);
+  dma_Accessor_ptr deMuxedData = getFilledOutMultiplexedDataAccesor(argv);
   uint sequenceLength = (*deMuxedData)[0].size();
 
-  if (argc == 4) {
-    printAllDMAChannels(deMuxedData);
+  if (argc == 3) {
+    printAllSequences(deMuxedData);
   } else {
-    uint channel, offset, elements, paramCount = 4;
+    uint seqNum, offset, elements, paramCount = 4;
     try {
-      channel = (argc > pp_channel) ? std::stoul(argv[pp_channel]) : 0;
+      seqNum = (argc > pp_seqNum) ? std::stoul(argv[pp_seqNum]) : 0;
       paramCount++;
+
       offset = (argc > pp_offset) ? std::stoul(argv[pp_offset]) : 0;
       paramCount++;
+
       elements = (argc > pp_elements) ? stoul(argv[pp_elements])
                                       : sequenceLength - offset;
       paramCount++;
@@ -634,11 +635,11 @@ void readDmaChannelUsingTheMultiplexedDataAccessor(unsigned int argc,
       ss << "Could not convert parameter " << paramCount << ".";
       throw exBase(ss.str(), 4); // + d + " to double: " + ex.what(), 3);
     }
-    printDMAChannel(deMuxedData, channel, offset, elements);
+    printSequence(deMuxedData, seqNum, offset, elements);
   }
 }
 
-dma_Accessor_ptr getMultiplexedDataAccesor(const char *argv[]) {
+dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]) {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2;
   devMap<devBase> device = getDevice(argv[pp_device]);
   dma_Accessor_ptr deMuxedData =
@@ -648,21 +649,22 @@ dma_Accessor_ptr getMultiplexedDataAccesor(const char *argv[]) {
 }
 
 // expects valid offset and num elements not exceeding sequence length
-void printDMAChannel(const dma_Accessor_ptr &deMuxedData, uint channel,
+void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
                      uint offset, uint elements) {
-  std::cout << "Channel " << channel << ":" << std::endl;
+  std::cout << "Sequence " << sequence << ":" << std::endl;
   for (uint i = offset; i < (offset + elements); i++) {
-    std::cout << (*deMuxedData)[channel][i] << std::endl;
+    std::cout << (*deMuxedData)[sequence][i] << std::endl;
   }
 }
 
-void printAllDMAChannels(const dma_Accessor_ptr &deMuxedData) {
+void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
   uint numSequences = deMuxedData->getNumberOfDataSequences();
   uint seqLength = (*deMuxedData)[0].size();
   for (uint seqCount = 0; seqCount < numSequences; seqCount++) {
-    std::cout << "Channel " << seqCount << ":" << std::endl;
+    std::cout << "Sequence " << seqCount << ":" << std::endl;
     for (uint value = 0; value < seqLength; value++) {
       std::cout << (*deMuxedData)[seqCount][value] << std::endl;
     }
+    std::cout << std::endl;
   }
 }

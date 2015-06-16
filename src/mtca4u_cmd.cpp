@@ -657,10 +657,10 @@ void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
 void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
   uint numSequences = deMuxedData->getNumberOfDataSequences();
   uint seqLength = (*deMuxedData)[0].size();
-  for(uint rowCount = 0; rowCount < seqLength; rowCount++){
-      for(uint columnCount = 0; columnCount < numSequences; columnCount++){
-	  std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
-      }
-      std::cout << std::endl;
+  for (uint rowCount = 0; rowCount < seqLength; rowCount++) {
+    for (uint columnCount = 0; columnCount < numSequences; columnCount++) {
+      std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
+    }
+    std::cout << std::endl;
   }
 }

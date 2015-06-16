@@ -9,16 +9,18 @@
 # NOTE: Paths specified below, assume the working directory is the build
 # directory
 mtca4u_executable=./mtca4u
-actual_console_output="./output_ReadDMAChannelCommand.txt"
-expected_console_output="./referenceTexts/referenceReadDMA_ChannelCommand.txt"
+actual_console_output="./output_ReadMultiplexedDataSequences.txt"
+expected_console_output="./referenceTexts/referenceReadMultiplexedDataSequences.txt"
 
 
 # Make sure the AREA_DMA_VIA_DMA region is set to parabolic values
-$mtca4u_executable write  DUMMY1 "" "WORD_ADC_ENA" 1 >> $actual_console_output 2>&1
+$mtca4u_executable write  DUMMY1 "" "WORD_ADC_ENA" 1 > $actual_console_output 2>&1
 
 # Normal command usage
-echo "reading the Muxed DMA region" >> $actual_console_output
-$mtca4u_executable read_dma  DUMMY1 "" 0 >> $actual_console_output 2>&1
+echo "reading the Muxed DMA region -> print all sequences" >> $actual_console_output
+$mtca4u_executable custom  DUMMY1 "" "DMA" >> $actual_console_output 2>&1
+echo "reading the Muxed DMA region -> print selected sequence" >> $actual_console_output
+$mtca4u_executable custom  DUMMY1 "" "DMA" 1 >> $actual_console_output 2>&1
 
 # Special cases to be covered
 

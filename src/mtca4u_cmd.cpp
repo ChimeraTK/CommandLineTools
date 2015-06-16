@@ -69,7 +69,7 @@ vector<Command> vectorOfCommands = {
   Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
   Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
   Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]"),
-  Command("custom",&readMultiplexedData,"Read DMA Channel from Board", "Board Module Register [sequenceNumber] [Offset] [numElements]")
+  Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [sequenceNumber] [Offset] [numElements]")
 };
 
 /**

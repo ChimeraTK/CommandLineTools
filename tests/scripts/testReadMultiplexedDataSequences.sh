@@ -18,9 +18,9 @@ $mtca4u_executable write  DUMMY1 "" "WORD_ADC_ENA" 1 > $actual_console_output 2>
 
 # Normal command usage
 echo "reading the Muxed DMA region -> print all sequences" >> $actual_console_output
-$mtca4u_executable custom  DUMMY1 "" "DMA" >> $actual_console_output 2>&1
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" >> $actual_console_output 2>&1
 echo "reading the Muxed DMA region -> print selected sequence" >> $actual_console_output
-$mtca4u_executable custom  DUMMY1 "" "DMA" 1 >> $actual_console_output 2>&1
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 >> $actual_console_output 2>&1
 
 # Special cases to be covered
 

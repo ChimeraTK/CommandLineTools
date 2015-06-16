@@ -649,7 +649,6 @@ dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]) {
 // expects valid offset and num elements not exceeding sequence length
 void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
                    uint offset, uint elements) {
-  std::cout << "Sequence " << sequence << ":" << std::endl;
   for (uint i = offset; i < (offset + elements); i++) {
     std::cout << (*deMuxedData)[sequence][i] << std::endl;
   }
@@ -658,11 +657,10 @@ void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
 void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
   uint numSequences = deMuxedData->getNumberOfDataSequences();
   uint seqLength = (*deMuxedData)[0].size();
-  for (uint seqCount = 0; seqCount < numSequences; seqCount++) {
-    std::cout << "Sequence " << seqCount << ":" << std::endl;
-    for (uint value = 0; value < seqLength; value++) {
-      std::cout << (*deMuxedData)[seqCount][value] << std::endl;
-    }
-    std::cout << std::endl;
+  for(uint rowCount = 0; rowCount < seqLength; rowCount++){
+      for(uint columnCount = 0; columnCount < numSequences; columnCount++){
+	  std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
+      }
+      std::cout << std::endl;
   }
 }

@@ -14,6 +14,7 @@ Available commands are:
   write		Board Module Register Value [offset]		Write data to Board
   read_dma_raw	Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]		Read DMA Area from Board
   read_dma	Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]	Read DMA Channel from Board
+  custom	Board Module Register [sequenceNumber] [Offset] [numElements]	Read DMA Channel from Board
 
 
 For further help or bug reports please contact michael.heuer@desy.de

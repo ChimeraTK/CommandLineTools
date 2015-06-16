@@ -23,23 +23,29 @@ echo "reading the Muxed DMA region -> print selected sequence" >> $actual_consol
 $mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 >> $actual_console_output 2>&1
 
 # Special cases to be covered
+echo "reading invalid sequence" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 9 >> $actual_console_output 2>&1
 
-# read an invalid channel
 # Read from a valid offset
+echo "reading from offset 2 of seq# 1" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 2 >> $actual_console_output 2>&1
 # Read using invalid offset in the seq
+echo "reading from invalid offset  in seq# 1" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 50 >> $actual_console_output 2>&1
+
 # Elements more than register size with and without offset 
+echo "reading specific number of elemnts from seq# 1 offset 1" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 1 3 >> $actual_console_output 2>&1
+
+echo "reading more elemnts than supported seq# 1" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 3 18 >> $actual_console_output 2>&1
+
+# bad parameters
+echo "bad parameters" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 hsg 18 >> $actual_console_output 2>&1
+
+echo "insufficient arguments" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" >> $actual_console_output 2>&1
 
 diff $actual_console_output $expected_console_output
 
-
-# Things to do:
-# 1. Set up the dmap file -> Done
-# 2. We have 25 values? so how many sequences->5 of 5 values each  -> Done
-# All sequences are supposed to be similar? <- for now yes -> Done
-# 3. Add a part which describes the DMA region in terms of the above scheme -> Done
-# 4. use the command to query the channels 
-
-
-# What is the mode?
-# We should nt be requiring this because we would be describing things in the map file
-# mode would not be req... the accessor can figure it out from the mapping scheme

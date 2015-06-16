@@ -10,3 +10,21 @@ reading the Muxed DMA region -> print selected sequence
 121
 256
 441
+reading invalid sequence
+seqNum invalid. Valid seqNumbers are in the range [0, 4]
+reading from offset 2 of seq# 1
+121
+256
+441
+reading from invalid offset  in seq# 1
+Offset exceed register size.
+reading specific number of elemnts from seq# 1 offset 1
+36
+121
+256
+reading more elemnts than supported seq# 1
+Data size exceed register size.
+bad parameters
+Could not convert parameter 5.
+insufficient arguments
+Not enough input arguments.

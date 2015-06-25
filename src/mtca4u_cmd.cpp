@@ -412,7 +412,7 @@ void readDmaRawData(unsigned int argc, const char *argv[])
 
   try {
     devMap<devPCIE> device = getDevice(argv[pp_device]);
-    boost::shared_ptr<devMap<devPCIE>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_module], argv[pp_register]);
+    boost::shared_ptr<devMap<devPCIE>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
     mapFile::mapElem regInfo = reg->getRegisterInfo();
   
     const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
@@ -499,7 +499,7 @@ void readDmaChannel(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
     
   devMap<devPCIE> device = getDevice(argv[pp_device]);
-  boost::shared_ptr<devMap<devPCIE>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_module],argv[pp_register]);
+  boost::shared_ptr<devMap<devPCIE>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
   mapFile::mapElem regInfo = reg->getRegisterInfo();
   
   try {

@@ -12,8 +12,8 @@ Available commands are:
   register_size	Board Module Register 			Prints the register infos
   read		Board Module Register [offset] [elements] [raw | hex]	Read data from Board
   write		Board Module Register Value [offset]		Write data to Board
-  read_dma_raw	Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]		Read DMA Area from Board
-  read_dma	Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]	Read DMA Channel from Board
+  read_dma	Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]		Read DMA Area from Board
+  read_seq	Board Module DataRegionName [sequenceNumber] [Offset] [numElements]	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
 
 
 For further help or bug reports please contact michael.heuer@desy.de

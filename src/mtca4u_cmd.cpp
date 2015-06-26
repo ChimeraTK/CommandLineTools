@@ -55,7 +55,6 @@ void getRegisterSize(unsigned int, const char **);
 void readRegister(unsigned int, const char **);
 void writeRegister(unsigned int, const char **);
 void readDmaRawData(unsigned int, const char **);
-void readDmaChannel(unsigned int, const char **);
 void readMultiplexedData(unsigned int , const char **);
 
 vector<Command> vectorOfCommands = {
@@ -67,8 +66,7 @@ vector<Command> vectorOfCommands = {
   Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
   Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
   Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
-  Command("read_dma_raw",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
-  Command("read_dma",&readDmaChannel,"Read DMA Channel from Board", "Board Module Register Channel [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]"),
+  Command("read_dma",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
   Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [sequenceNumber] [Offset] [numElements]")
 };
 
@@ -493,100 +491,6 @@ void readDmaRawData(unsigned int argc, const char *argv[])
   }
 }
 
- /**
-  * @brief readDmaChannel
-  *
-  * @param[in] nlhs Number of left hand side parameter
-  * @param[inout] phls Pointer to the left hand side parameter
-  *
-  * Parameter: device, register, channel, [sample], [offset], [dmode], [singed], [bit], [fracbit]
-  */
-void readDmaChannel(unsigned int argc, const char *argv[])
-{
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_channel = 3, pp_offset = 4, pp_elements = 5;
-  const unsigned int pp_channel_cnt = 6, pp_mode = 7, pp_signed = 8, pp_bit = 9, pp_fracbit = 10;
-  
-  uint paramCount = 1; // used to count the valid converted Parameter
-  
-  if(argc < 4)
-    throw exBase("Not enough input arguments.", 1);
-    
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
-  
-  try {
-	  const uint32_t channel = stoul(argv[pp_channel]);
-    paramCount++;
-    
-    const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-    paramCount++;
-
-    const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : (regInfo.reg_elem_nr - offset);
-    paramCount++;
-
-    const uint32_t channel_cnt = (argc > pp_channel_cnt) ? stoul(argv[pp_channel_cnt]) : 8;
-    paramCount++;
-
-    const uint32_t mode = (argc > pp_mode) ? stoul(argv[pp_mode]) : 32;
-    paramCount++;
-
-    const uint32_t signedFlag = (argc > pp_signed) ? stoul(argv[pp_signed]) : 0;
-    paramCount++;
-
-    const uint32_t bits = (argc > pp_bit) ? stoul(argv[pp_bit]) : mode;
-    paramCount++;
-
-    const uint32_t fracBits = (argc > pp_fracbit) ? stoul(argv[pp_fracbit]) : 0;
-
-    if ((signedFlag != 0) && (signedFlag != 1))
-      throw exBase("Invalid signed Flag.", 5);
-
-    if ((mode != 32) && (mode != 16))
-      throw exBase("Invalid data mode.", 5);
-
-    FixedPointConverter conv(bits, fracBits, signedFlag);
-
-    // FIXME
-    const uint32_t sample = elements / channel_cnt;
-    paramCount++;
-
-    if (sample <= 0) // Prevent invalid inputs
-      throw exBase("Invalid number of sample.", 5);
-
-    if (channel >= channel_cnt)
-        throw exBase("Invalid channel.", 5);
-
-    const uint32_t size = sample*channel_cnt;
-    
-	
-	if (mode == 16)
-	{
-      vector<int16_t> values(size);
-      reg->readDMA(reinterpret_cast<int32_t*>(&values[0]), size*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
-      // it is safe to cast size to int because we checked the range before
-      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
-          cout << conv.toDouble(values[is]) << endl;
-	}
-	else {
-      vector<int32_t> values(size);
-      reg->readDMA(&(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
-      // it is safe to cast size to int because we checked the range before
-      for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
-          cout << conv.toDouble(values[is]) << endl;
-	}
-  }
-  catch(invalid_argument &ex) {
-    std::stringstream ss;
-    ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(),3);// + d + " to double: " + ex.what(), 3);
-  }
-  catch(out_of_range &ex) {
-    std::stringstream ss;
-    ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(),4);// + d + " to double: " + ex.what(), 3);
-  }
-}
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int pp_seqNum = 3, pp_offset = 4, pp_elements = 5;

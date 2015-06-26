@@ -149,7 +149,7 @@ devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName =
       break;    
   }
   
-  boost::shared_ptr <mtca4u::devPCIE> pcieDevice (new mtca4u::devPCIE());
+  boost::shared_ptr <mtca4u::devBase> pcieDevice (new mtca4u::devPCIE());
   pcieDevice->openDev(it->first.dev_file);
 
   // creating the mapped device and puuting an opened pcie device in it. By
@@ -280,9 +280,9 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
 
   devMap<devBase> device = getDevice(argv[0]);
-  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[2], argv[1]);
   
-  mapFile::mapElem regInfo = reg.getRegisterInfo();
+  mapFile::mapElem regInfo = reg->getRegisterInfo();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
   cout << regInfo.reg_name.c_str() << "\t" << regInfo.reg_elem_nr << "\t\t" << regInfo.reg_signed << "\t\t";
@@ -302,9 +302,9 @@ void getRegisterSize(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
 
   devMap<devBase> device = getDevice(argv[0]);
-  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[2], argv[1]);
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[2], argv[1]);
 
-  cout << reg.getRegisterInfo().reg_elem_nr << std::endl;
+  cout << reg->getRegisterInfo().reg_elem_nr << std::endl;
 }
 
 /**
@@ -323,8 +323,8 @@ void readRegister(unsigned int argc, const char* argv[])
     throw exBase("Not enough input arguments.", 1);
   
   devMap<devBase> device = getDevice(argv[pp_device]);
-  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
-  mapFile::mapElem regInfo = reg.getRegisterInfo();
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
+  mapFile::mapElem regInfo = reg->getRegisterInfo();
   
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
   // Check the offset
@@ -346,14 +346,14 @@ void readRegister(unsigned int argc, const char* argv[])
   if((cmode == "raw") || (cmode == "hex"))
   {
     vector<int32_t> values(elements);  
-    reg.readReg(&(values[0]), elements*4, offset*4);
+    reg->readReg(&(values[0]), elements*4, offset*4);
     if (cmode == "hex") cout << std::hex; else cout << std::fixed;
     for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
       cout << static_cast<uint32_t>(values[d]) << endl;
   }
   else { // Read with automatic conversion to double
     vector<double> values(elements);  
-    reg.read(&(values[0]), elements, offset);
+    reg->read(&(values[0]), elements, offset);
     cout << std::scientific << std::setprecision(8);
     for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
       cout << values[d] << endl;
@@ -376,8 +376,8 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
     
   devMap<devBase> device = getDevice(argv[pp_device]);
-  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
-  mapFile::mapElem regInfo = reg.getRegisterInfo();
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
+  mapFile::mapElem regInfo = reg->getRegisterInfo();
 
   // TODO: Consider extracting this snippet to a helper method as we use the
   // same check in read command as well
@@ -402,7 +402,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
-  reg.write(&(vD[0]), vD.size(), offset);
+  reg->write(&(vD[0]), vD.size(), offset);
 }
 
  /**
@@ -425,8 +425,8 @@ void readDmaRawData(unsigned int argc, const char *argv[])
 
   try {
     devMap<devBase> device = getDevice(argv[pp_device]);
-    devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_module], argv[pp_register]);
-    mapFile::mapElem regInfo = reg.getRegisterInfo();
+    boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
+    mapFile::mapElem regInfo = reg->getRegisterInfo();
   
     const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
     paramCount++;
@@ -454,7 +454,7 @@ void readDmaRawData(unsigned int argc, const char *argv[])
     if (dmode == 16)
     {
       vector<int16_t> values(elements);
-      reg.readDMA(reinterpret_cast<int32_t*>(&values[0]), elements*sizeof(int16_t), offset); // ToDo: add offset for different daq blocks
+      reg->readDMA(reinterpret_cast<int32_t*>(&values[0]), elements*sizeof(int16_t), offset); // ToDo: add offset for different daq blocks
       // it is safe to cast sample to int because we checked the range before
       for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
     {
@@ -468,7 +468,7 @@ void readDmaRawData(unsigned int argc, const char *argv[])
 	}
 	else {
       vector<int32_t> values(elements);
-      reg.readDMA(&(values[0]), elements*sizeof(int32_t), offset); // ToDo: add offset for different daq blocks
+      reg->readDMA(&(values[0]), elements*sizeof(int32_t), offset); // ToDo: add offset for different daq blocks
       // it is safe to cast sample to int because we checked the range before
       for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
 	  {
@@ -512,8 +512,8 @@ void readDmaChannel(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
     
   devMap<devBase> device = getDevice(argv[pp_device]);
-  devMap<devBase>::RegisterAccessor reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
-  mapFile::mapElem regInfo = reg.getRegisterInfo();
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
+  mapFile::mapElem regInfo = reg->getRegisterInfo();
   
   try {
 	  const uint32_t channel = stoul(argv[pp_channel]);
@@ -563,14 +563,14 @@ void readDmaChannel(unsigned int argc, const char *argv[])
 	if (mode == 16)
 	{
       vector<int16_t> values(size);
-      reg.readDMA(reinterpret_cast<int32_t*>(&values[0]), size*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
+      reg->readDMA(reinterpret_cast<int32_t*>(&values[0]), size*sizeof(int16_t), 0); // ToDo: add offset for different daq blocks
       // it is safe to cast size to int because we checked the range before
       for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
           cout << conv.toDouble(values[is]) << endl;
 	}
 	else {
       vector<int32_t> values(size);
-      reg.readDMA(&(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
+      reg->readDMA(&(values[0]), size*sizeof(int32_t), 0); // ToDo: add offset for different daq blocks
       // it is safe to cast size to int because we checked the range before
       for(unsigned int is = channel; is < static_cast<unsigned int>(size); is += channel_cnt)
           cout << conv.toDouble(values[is]) << endl;

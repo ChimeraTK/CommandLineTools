@@ -28,16 +28,16 @@
 using namespace mtca4u;
 using namespace std;
 
+
+// typedefs and Functions declarations
 typedef MultiplexedDataAccessor<double> dma_Accessor;
 typedef boost::shared_ptr<dma_Accessor> dma_Accessor_ptr;
 
-// Functions declaration
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
 dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]);
 void printSequence (const dma_Accessor_ptr& deMuxedData, uint sequence, uint offset, uint elements);
 void printAllSequences(const dma_Accessor_ptr& deMuxedData);
-
-// Command Function declarations and stuff
+bool isValidElemCount(const mapFile::mapElem &regInfo, const int32_t elements);
 
 typedef void (*CmdFnc)(unsigned int, const char **);
 
@@ -66,7 +66,7 @@ vector<Command> vectorOfCommands = {
   Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
   Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
   Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
-  Command("read_dma",&readDmaRawData,"Read DMA Area from Board", "Board Module Register [Sample] [Offset] [Mode] [Singed] [Bit] [FracBit]\t"),
+  Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
   Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [sequenceNumber] [Offset] [numElements]")
 };
 
@@ -319,27 +319,25 @@ void readRegister(unsigned int argc, const char* argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
   
-  if(argc < 3)
+  if(argc < 3){
     throw exBase("Not enough input arguments.", 1);
-  
+  }
   devMap<devBase> device = getDevice(argv[pp_device]);
+  
   boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
   mapFile::mapElem regInfo = reg->getRegisterInfo();
   
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
   // Check the offset
-  if (regInfo.reg_elem_nr <= offset)
+  if (regInfo.reg_elem_nr <= offset){
    throw exBase("Offset exceed register size.", 1);
+  }
   
   const int32_t elements = (argc > pp_elements) ? stoll(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
-  if(elements < 0) {
-      throw exBase("numberOfelements to read out cannot be a negative value", 1);
-  } else if(static_cast<uint32_t>(elements) >  regInfo.reg_elem_nr){
-      // Checking for user entered size at this point, because we do not want to
-      // run vector<int32_t/double> values(elements) with a huge value in
-      // elements (can lead to mem allocation failure if too big).
-      throw exBase("Data size exceed register size.", 1);
-  }
+    if(!isValidElemCount(regInfo, elements)){
+      return; // more specifically do nothing if number of elements asked by the
+              // user is 0
+    }
 
   string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   // Read as raw values
@@ -372,9 +370,9 @@ void writeRegister(unsigned int argc, const char *argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
   
-  if(argc < 4)
+  if(argc < 4){
     throw exBase("Not enough input arguments.", 1);
-    
+  }
   devMap<devBase> device = getDevice(argv[pp_device]);
   boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
   mapFile::mapElem regInfo = reg->getRegisterInfo();
@@ -411,88 +409,71 @@ void writeRegister(unsigned int argc, const char *argv[])
   * @param[in] nlhs Number of left hand side parameter
   * @param[inout] phls Pointer to the left hand side parameter
   *
-  * Parameter: device, register, [offset], [elements], [mode], [singed], [bit], [fracbit]
+  * Parameter: device, register, [offset], [elements], [display_mode]
   */
-void readDmaRawData(unsigned int argc, const char *argv[])
-{
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4;
-  const unsigned int pp_mode = 5, pp_signed = 6, pp_bit = 7, pp_fracbit = 8;
-  
-  uint paramCount = 1; // used to count the valid converted Parameter
-  
-  if(argc < 3)
-    throw exBase("Not enough input arguments.", 1);
+void readDmaRawData(unsigned int argc, const char *argv[]) {
 
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2,
+                     pp_offset = 3, pp_elements = 4, pp_dmode = 5;
+
+  if (argc < 3) {
+    throw exBase("Not enough input arguments.", 1);
+  }
+
+  devMap<devBase> device = getDevice(argv[pp_device]);
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg =
+      device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
+
+  mapFile::mapElem regInfo = reg->getRegisterInfo();
+  int paramCount = 4;
+  uint offset, elements;
   try {
-    devMap<devBase> device = getDevice(argv[pp_device]);
-    boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
-    mapFile::mapElem regInfo = reg->getRegisterInfo();
-  
-    const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
+    offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
     paramCount++;
-    
-    const uint32_t elements = (argc > pp_elements) ? stoul(argv[pp_elements]) : (regInfo.reg_elem_nr - offset);
+    if (regInfo.reg_elem_nr <= offset) {
+      throw exBase("Offset exceed register size.", 1);
+    }
+
+    elements = (argc > pp_elements) ? stoll(argv[pp_elements])
+                                    : regInfo.reg_elem_nr - offset;
+    if(!isValidElemCount(regInfo, elements)){
+      return; // more specifically do nothing if number of elements asked by the
+              // user is 0
+    }
     paramCount++;
-        
-    const uint32_t dmode = (argc > pp_mode) ? stoul(argv[pp_mode]) : 32;
-    paramCount++;
-    
-    const uint32_t signedFlag = (argc > pp_signed) ? stoul(argv[pp_signed]) > 0 : false;
-    paramCount++;
-        
-    const uint32_t bits = (argc > pp_bit) ? stoul(argv[pp_bit]) : dmode;
-    paramCount++;
-    
-    const uint32_t fracBits = (argc > pp_fracbit) ? stoul(argv[pp_fracbit]) : 0;
-    paramCount++;
-    
-    if ((dmode != 32) && (dmode != 16))
-      throw exBase("Invalid data mode.", 5);
-      
-    FixedPointConverter conv(bits, fracBits, signedFlag);
-	
-    if (dmode == 16)
-    {
-      vector<int16_t> values(elements);
-      reg->readDMA(reinterpret_cast<int32_t*>(&values[0]), elements*sizeof(int16_t), offset); // ToDo: add offset for different daq blocks
-      // it is safe to cast sample to int because we checked the range before
-      for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
-    {
-	    //if (cmode == "hex")
-	    //  cout << std::hex << values[is] << endl;
-	    //else if (cmode == "raw")
-		//  cout << std::fixed << values[is] << endl;
-		//else
-          cout << conv.toDouble(values[is]) << endl;
-	  }
-	}
-	else {
-      vector<int32_t> values(elements);
-      reg->readDMA(&(values[0]), elements*sizeof(int32_t), offset); // ToDo: add offset for different daq blocks
-      // it is safe to cast sample to int because we checked the range before
-      for(unsigned int is = 0; is < static_cast<unsigned int>(elements); is++)
-	  {
-	    //if (cmode == "hex")
-	    //  cout << std::hex << values[is] << endl;
-	    //else if (cmode == "raw")
-		//  cout << std::fixed << values[is] << endl;
-		//else
-          cout << conv.toDouble(values[is]) << endl;
-	  }
-	}
   }
-  catch(invalid_argument &ex) {
+
+  catch (invalid_argument &ex) {
     std::stringstream ss;
     ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(),3);// + d + " to double: " + ex.what(), 3);
+    throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
   }
-  catch(out_of_range &ex) {
+
+  catch (out_of_range &ex) {
     std::stringstream ss;
     ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(),4);// + d + " to double: " + ex.what(), 3);
+    throw exBase(ss.str(), 4); // + d + " to double: " + ex.what(), 3);
+  }
+
+  string displayMode = (argc > pp_dmode) ? argv[pp_dmode] : "raw";
+  if ((displayMode == "raw") || (displayMode == "hex")) {
+    vector<int32_t> values(elements);
+    reg->readDMA(&(values[0]), elements * 4, offset * 4);
+
+    if (displayMode == "hex") {
+      cout << std::hex;
+    } else {
+      cout << std::fixed;
+    }
+
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+         d++) {
+      cout << static_cast<uint32_t>(values[d]) << endl;
+    }
+  } else {
+    throw exBase("Invalid display mode; Use raw | hex", 1);
   }
 }
-
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int pp_seqNum = 3, pp_offset = 4, pp_elements = 5;
@@ -569,4 +550,20 @@ void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
     }
     std::cout << std::endl;
   }
+}
+
+bool isValidElemCount(const mapFile::mapElem &regInfo, const int32_t elements) {
+
+  if (elements < 0) {
+    throw exBase("numberOfelements to read out cannot be a negative value", 1);
+  } else if (static_cast<uint32_t>(elements) > regInfo.reg_elem_nr) {
+    // Checking for user entered size at this point, because we do not want to
+    // run vector<int32_t/double> values(elements) with a huge value in
+    // elements (can lead to mem allocation failure if too big).
+    throw exBase("Data size exceed register size.", 1);
+  } else if (elements == 0) {
+    return false;
+  }
+
+  return true;
 }

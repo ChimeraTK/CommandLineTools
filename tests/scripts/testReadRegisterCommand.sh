@@ -75,6 +75,8 @@ echo "hex representation for Raw Value" >> $actual_console_output
 bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 4 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
 echo "uint representation for Raw Value" >> $actual_console_output
 bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 4 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
+echo "uint representation for Raw Value when num elem is 0 -> This was causing aseg fault before" >> $actual_console_output
+bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 0 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 # not enough arguments
 echo "Command called with not enough arguments" >> $actual_console_output

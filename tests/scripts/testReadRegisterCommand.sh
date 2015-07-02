@@ -21,7 +21,7 @@ $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX 7$'\t'8$'\t'9$'\t'10 >> $actual
 $mtca4u_executable write  DUMMY2 ADC WORD_CLK_MUX 11$'\t'12$'\t'13$'\t'14 >> $actual_console_output 2>&1
 #---------------------------------
 
-# Read elements from the DMA region. If this works in returning the parabolic
+# Read elements from AREA_DMAABLE register. If this works in returning the parabolic
 # values (provided card in a sanitized state), basic read works. Remaing tests
 # on WORD_CLK_MUX are for testing the other aspects of read
 echo "read DMA region - board_withoutModules" >> $actual_console_output 

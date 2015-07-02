@@ -80,4 +80,8 @@ bash -c '$0 read DUMMY2 ADC  WORD_CLK_MUX 0 4 raw >> $1  2>&1' $mtca4u_executabl
 echo "Command called with not enough arguments" >> $actual_console_output
 bash -c '$0 read DUMMY2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
+# Bad Device name
+echo "Command called with bad device name" >> $actual_console_output
+bash -c '$0 read NON_EXISTENT_DEVICE ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+
 diff $actual_console_output $expected_console_output

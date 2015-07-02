@@ -143,7 +143,7 @@ ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )
 # Enable code coverage when cmake build configured -DCMAKE_BUILD_TYPE=Debug.
 # lcov gets run by the target defined in Makefile.coverage
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  CONFIGURE_FILE(cmake/Makefile.coverage
+  CONFIGURE_FILE(cmake/Makefile.coverage.in
     ${PROJECT_BINARY_DIR}/Makefile.coverage @ONLY)
   ADD_CUSTOM_TARGET(coverage
     make -f Makefile.coverage

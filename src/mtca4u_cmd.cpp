@@ -146,7 +146,9 @@ devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName =
     if (deviceName == it->first.dev_name)
       break;    
   }
-  
+  if(it == filesParser.end()){
+      throw exBase("Unknown device '" + deviceName + "'.", 2);
+  }
   boost::shared_ptr <mtca4u::devBase> pcieDevice (new mtca4u::devPCIE());
   pcieDevice->openDev(it->first.dev_file);
 

@@ -53,6 +53,7 @@ $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX "a"$'\t'"h"$'\t' >> $actual_con
 # conversion at this point. Commenting out this part for now.
 #echo "invoke command with value that messes up range checking in the string to double conversion" >> $actual_console_output 2>&1 
 #$mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX "5.233365555525556954554452" >> $actual_console_output 2>&1
+$mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX "1e4000" >> $actual_console_output 2>&1
 
 # invoke write without enough arguments
 echo "invoke command with no values to write" >> $actual_console_output 2>&1 

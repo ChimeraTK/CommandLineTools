@@ -449,12 +449,6 @@ void readDmaRawData(unsigned int argc, const char *argv[]) {
     throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
   }
 
-  catch (out_of_range &ex) {
-    std::stringstream ss;
-    ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(), 4); // + d + " to double: " + ex.what(), 3);
-  }
-
   string displayMode = (argc > pp_dmode) ? argv[pp_dmode] : "raw";
   if ((displayMode == "raw") || (displayMode == "hex")) {
     vector<int32_t> values(elements);
@@ -515,11 +509,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
       ss << "Could not convert parameter " << paramCount << ".";
       throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
     }
-    catch (out_of_range &ex) {
-      std::stringstream ss;
-      ss << "Could not convert parameter " << paramCount << ".";
-      throw exBase(ss.str(), 4); // + d + " to double: " + ex.what(), 3);
-    }
+
     printSequence(deMuxedData, seqNum, offset, elements);
   }
 }

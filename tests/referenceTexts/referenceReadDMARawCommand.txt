@@ -155,3 +155,7 @@ uint representation for Raw Value
 uint representation for Raw Value when num elem is 0 -> This was causing aseg fault before
 Command called with not enough arguments
 Not enough input arguments.
+bad parameters
+Could not convert parameter 5.
+bad display mode
+Invalid display mode; Use raw | hex

@@ -325,42 +325,48 @@ void getRegisterSize(unsigned int argc, const char *argv[])
 void readRegister(unsigned int argc, const char* argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
+  const unsigned int maxCmdArgs = 6;
   
   if(argc < 3){
     throw exBase("Not enough input arguments.", 1);
   }
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
-  
-  const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-  // Check the offset
-  if (regInfo.reg_elem_nr <= offset){
-   throw exBase("Offset exceed register size.", 1);
-  }
-  
-  const int32_t elements = (argc > pp_elements) ? stoll(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
-    if(!isValidElemCount(regInfo, elements)){
-      return; // more specifically do nothing if number of elements asked by the
-              // user is 0
-    }
+  // validate argc
+  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
+  std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
+  RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
+                                                argList[pp_module],
+                                                argList[pp_register]);
+  RegisterInfo_t regInfo = reg->getRegisterInfo();
+  
+  uint maxElements = regInfo.reg_elem_nr;
+  uint maxOffset = maxElements - 1;
+  
+  uint offset = extractOffset(argList[pp_offset], maxOffset);
+  uint numElements =
+      extractNumElements(argList[pp_elements], offset, maxElements);
+  if (numElements == 0) {
+    return;
+  }
+// TODO: adapt extractDisplayMode and use here
   string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   // Read as raw values
-  if((cmode == "raw") || (cmode == "hex"))
-  {
-    vector<int32_t> values(elements);  
-    reg->readReg(&(values[0]), elements*4, offset*4);
-    if (cmode == "hex") cout << std::hex; else cout << std::fixed;
-    for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
+  if ((cmode == "raw") || (cmode == "hex")) {
+    vector<int32_t> values(numElements);
+    reg->readReg(&(values[0]), numElements * 4, offset * 4);
+    if (cmode == "hex")
+      cout << std::hex;
+    else
+      cout << std::fixed;
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+         d++)
       cout << static_cast<uint32_t>(values[d]) << endl;
-  }
-  else { // Read with automatic conversion to double
-    vector<double> values(elements);  
-    reg->read(&(values[0]), elements, offset);
+  } else { // Read with automatic conversion to double
+    vector<double> values(numElements);
+    reg->read(&(values[0]), numElements, offset);
     cout << std::scientific << std::setprecision(8);
-    for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+         d++)
       cout << values[d] << endl;
   }
 }
@@ -620,6 +626,7 @@ RegisterAccessor_t getRegisterAccessor(const string &deviceName,
   devMap<devBase> device = getDevice(deviceName);
   boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg =
       device.getRegisterAccessor(registerName, module);
+  return reg;
 }
 
 std::string extractDisplayMode(const string &displayMode) {

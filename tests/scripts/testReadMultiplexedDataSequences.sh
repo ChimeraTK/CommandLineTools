@@ -47,5 +47,23 @@ $mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 hsg 18 >> $actual_console_output 
 echo "insufficient arguments" >> $actual_console_output
 $mtca4u_executable read_seq  DUMMY1 "" >> $actual_console_output 2>&1
 
+
+echo "Using sequence list to print selected sequences (3, 2, 1) - valid case" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" DMA "3 2 1">> $actual_console_output 2>&1
+
+
+echo "Using sequence list to print selected sequences (3, 2, 1) - offset = 2, numelements = 1" >> $actual_console_output
+bash -c '$0 read_seq DUMMY1 ""  DMA "3 2 1" 2 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+
+echo "Using sequence list bad seq num" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" DMA "3 12 1">> $actual_console_output 2>&1
+
+echo "Using sequence list: Conv error in seq num" >> $actual_console_output
+# tried "3 2jh2 1" in the list. seems std::stoul interprets 2jh2 as 2
+$mtca4u_executable read_seq  DUMMY1 "" DMA "3 jhjg2 1">> $actual_console_output 2>&1
+
+echo "Using sequence list empty list" >> $actual_console_output
+$mtca4u_executable read_seq  DUMMY1 "" DMA "">> $actual_console_output 2>&1
+
 diff $actual_console_output $expected_console_output
 

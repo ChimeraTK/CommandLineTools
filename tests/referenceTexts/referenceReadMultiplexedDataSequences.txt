@@ -20,3 +20,16 @@ bad parameters
 Could not convert Offset
 insufficient arguments
 Not enough input arguments.
+Using sequence list to print selected sequences (3, 2, 1) - valid case
+9	64	169	324	529	
+4	49	144	289	484	
+1	36	121	256	441	
+Using sequence list to print selected sequences (3, 2, 1) - offset = 2, numelements = 1
+169	
+144	
+121	
+Using sequence list bad seq num
+seqNum invalid. Valid seqNumbers are in the range [0, 4]
+Using sequence list: Conv error in seq num
+Could not convert sequence List
+Using sequence list empty list

@@ -65,8 +65,10 @@ bash -c '$0 read_dma_raw DUMMY2 "" >> $1  2>&1' $mtca4u_executable $actual_conso
 
 
 # bad parameters
-echo "bad parameters" >> $actual_console_output
+echo "bad num elements" >> $actual_console_output
 $mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" 1 hsg >> $actual_console_output 2>&1
+echo "bad offset Value" >> $actual_console_output
+$mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" hj  >> $actual_console_output 2>&1
 echo "bad display mode" >> $actual_console_output
 $mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" 0 20 invalid_dispaly_option >> $actual_console_output 2>&1
 

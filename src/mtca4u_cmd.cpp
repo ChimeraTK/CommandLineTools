@@ -608,13 +608,17 @@ uint extractNumElements(const string &userEnteredValue,
                         uint validOffset,
                         uint maxElements) {
   uint numElements;
-  if (userEnteredValue.empty()) {
-    numElements = maxElements - validOffset;
-  } else {
-    numElements = std::stoul(userEnteredValue);
+  try {
+    if (userEnteredValue.empty()) {
+      numElements = maxElements - validOffset;
+    } else {
+      numElements = std::stoul(userEnteredValue);
+    }
   }
-
-  if (numElements > (maxElements -validOffset)) {
+  catch (invalid_argument &ex) {
+    throw exBase("Could not convert numElements to return", 1);
+  }
+  if (numElements > (maxElements - validOffset)) {
     throw exBase("Data size exceed register size.", 1);
   }
   return numElements;

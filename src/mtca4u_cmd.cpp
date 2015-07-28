@@ -32,12 +32,19 @@ using namespace std;
 // typedefs and Functions declarations
 typedef MultiplexedDataAccessor<double> dma_Accessor;
 typedef boost::shared_ptr<dma_Accessor> dma_Accessor_ptr;
+typedef boost::shared_ptr<devMap<devBase>::RegisterAccessor> RegisterAccessor_t;
+typedef mtca4u::mapFile::mapElem RegisterInfo_t;
 
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
-dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]);
-void printSequence (const dma_Accessor_ptr& deMuxedData, uint sequence, uint offset, uint elements);
+dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName);
+void printSeqList (const dma_Accessor_ptr& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 void printAllSequences(const dma_Accessor_ptr& deMuxedData);
-bool isValidElemCount(const mapFile::mapElem &regInfo, const int32_t elements);
+std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
+std::vector<uint> extractSequenceList(string const & list, uint maxSeq);
+uint extractOffset(string const & userEnteredOffset, uint maxOffset);
+uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements);
+RegisterAccessor_t getRegisterAccessor(const string &deviceName, const string &module, const string &registerName);
+std::string extractDisplayMode(const string &displayMode);
 
 typedef void (*CmdFnc)(unsigned int, const char **);
 
@@ -318,42 +325,48 @@ void getRegisterSize(unsigned int argc, const char *argv[])
 void readRegister(unsigned int argc, const char* argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
+  const unsigned int maxCmdArgs = 6;
   
   if(argc < 3){
     throw exBase("Not enough input arguments.", 1);
   }
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
-  
-  const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-  // Check the offset
-  if (regInfo.reg_elem_nr <= offset){
-   throw exBase("Offset exceed register size.", 1);
-  }
-  
-  const int32_t elements = (argc > pp_elements) ? stoll(argv[pp_elements]) : regInfo.reg_elem_nr - offset;
-    if(!isValidElemCount(regInfo, elements)){
-      return; // more specifically do nothing if number of elements asked by the
-              // user is 0
-    }
+  // validate argc
+  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
+  std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
+  RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
+                                                argList[pp_module],
+                                                argList[pp_register]);
+  RegisterInfo_t regInfo = reg->getRegisterInfo();
+  
+  uint maxElements = regInfo.reg_elem_nr;
+  uint maxOffset = maxElements - 1;
+  
+  uint offset = extractOffset(argList[pp_offset], maxOffset);
+  uint numElements =
+      extractNumElements(argList[pp_elements], offset, maxElements);
+  if (numElements == 0) {
+    return;
+  }
+// TODO: adapt extractDisplayMode and use here
   string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
   // Read as raw values
-  if((cmode == "raw") || (cmode == "hex"))
-  {
-    vector<int32_t> values(elements);  
-    reg->readReg(&(values[0]), elements*4, offset*4);
-    if (cmode == "hex") cout << std::hex; else cout << std::fixed;
-    for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
+  if ((cmode == "raw") || (cmode == "hex")) {
+    vector<int32_t> values(numElements);
+    reg->readReg(&(values[0]), numElements * 4, offset * 4);
+    if (cmode == "hex")
+      cout << std::hex;
+    else
+      cout << std::fixed;
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+         d++)
       cout << static_cast<uint32_t>(values[d]) << endl;
-  }
-  else { // Read with automatic conversion to double
-    vector<double> values(elements);  
-    reg->read(&(values[0]), elements, offset);
+  } else { // Read with automatic conversion to double
+    vector<double> values(numElements);
+    reg->read(&(values[0]), numElements, offset);
     cout << std::scientific << std::setprecision(8);
-    for(unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()) ; d++)
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+         d++)
       cout << values[d] << endl;
   }
 }
@@ -415,145 +428,219 @@ void readDmaRawData(unsigned int argc, const char *argv[]) {
 
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2,
                      pp_offset = 3, pp_elements = 4, pp_dmode = 5;
+  const unsigned int maxCmdArgs = 6;
 
   if (argc < 3) {
     throw exBase("Not enough input arguments.", 1);
   }
 
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg =
-      device.getRegisterAccessor(argv[pp_register], argv[pp_module]);
+  // validate argc
+  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
+  std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
-  int paramCount = 4;
-  uint offset, elements;
-  try {
-    offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-    paramCount++;
-    if (regInfo.reg_elem_nr <= offset) {
-      throw exBase("Offset exceed register size.", 1);
-    }
+  RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
+                                                argList[pp_module],
+                                                argList[pp_register]);
+  RegisterInfo_t regInfo = reg->getRegisterInfo();
 
-    elements = (argc > pp_elements) ? stoll(argv[pp_elements])
-                                    : regInfo.reg_elem_nr - offset;
-    if(!isValidElemCount(regInfo, elements)){
-      return; // more specifically do nothing if number of elements asked by the
-              // user is 0
-    }
-    paramCount++;
+  uint maxElements = regInfo.reg_elem_nr;
+  uint maxOffset = maxElements - 1;
+  uint offset = extractOffset(argList[pp_offset], maxOffset);
+  uint numElements =
+      extractNumElements(argList[pp_elements], offset, maxElements);
+  if (numElements == 0) {
+    return;
   }
 
-  catch (invalid_argument &ex) {
-    std::stringstream ss;
-    ss << "Could not convert parameter " << paramCount << ".";
-    throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
-  }
+  std::string displayMode = extractDisplayMode(argList[pp_dmode]);
+  vector<int32_t> values(numElements);
+  reg->readDMA(&(values[0]), numElements * 4, offset * 4);
 
-  string displayMode = (argc > pp_dmode) ? argv[pp_dmode] : "raw";
-  if ((displayMode == "raw") || (displayMode == "hex")) {
-    vector<int32_t> values(elements);
-    reg->readDMA(&(values[0]), elements * 4, offset * 4);
-
-    if (displayMode == "hex") {
-      cout << std::hex;
-    } else {
-      cout << std::fixed;
-    }
-
-    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
-         d++) {
-      cout << static_cast<uint32_t>(values[d]) << endl;
-    }
+  if (displayMode == "hex") {
+    cout << std::hex;
   } else {
-    throw exBase("Invalid display mode; Use raw | hex", 1);
+    cout << std::fixed;
+  }
+  for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
+       d++) {
+    cout << static_cast<uint32_t>(values[d]) << endl;
   }
 }
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
-  const unsigned int pp_seqNum = 3, pp_offset = 4, pp_elements = 5;
+  const unsigned int maxCmdArgs = 6;
+  const unsigned int pp_deviceName = 0, pp_module = 1, pp_register = 2,
+                     pp_seqList = 3, pp_offset = 4, pp_elements = 5;
   if (argc < 3) {
     throw exBase("Not enough input arguments.", 1);
   }
 
-  dma_Accessor_ptr deMuxedData = getFilledOutMultiplexedDataAccesor(argv);
-  uint sequenceLength = (*deMuxedData)[0].size();
-  uint numSequences = (*deMuxedData).getNumberOfDataSequences();
+  // validate argc
+  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
+  std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
+
+  dma_Accessor_ptr deMuxedData = getFilledOutMultiplexedDataAccesor(
+      argList[pp_deviceName], argList[pp_module], argList[pp_register]);
 
   if (argc == 3) {
     printAllSequences(deMuxedData);
   } else {
-    uint seqNum, offset, elements, paramCount = 4;
-    try {
-      seqNum = (argc > pp_seqNum) ? std::stoul(argv[pp_seqNum]) : 0;
-      paramCount++;
+    uint sequenceLength = (*deMuxedData)[0].size();
+    uint numSequences = (*deMuxedData).getNumberOfDataSequences();
+    std::vector<uint> seqList =
+        extractSequenceList(argList[pp_seqList], numSequences);
+    uint maxOffset = sequenceLength - 1;
+    uint offset = extractOffset(argList[pp_offset], maxOffset);
+    uint numElements =
+        extractNumElements(argList[pp_elements], offset, sequenceLength);
 
-      offset = (argc > pp_offset) ? std::stoul(argv[pp_offset]) : 0;
-      paramCount++;
-
-      elements = (argc > pp_elements) ? stoul(argv[pp_elements])
-                                      : sequenceLength - offset;
-      paramCount++;
-      if (seqNum >= numSequences) {
-        std::stringstream ss;
-        ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
-           << (numSequences - 1) << "]";
-        throw exBase(ss.str(), 1);
-      } else if (offset >= sequenceLength) {
-        throw exBase("Offset exceed register size.", 1);
-      } else if (elements > (sequenceLength - offset)) {
-        throw exBase("Data size exceed register size.", 1);
-      }
+    if (numElements == 0) {
+      return;
     }
-    catch (invalid_argument &ex) {
-      std::stringstream ss;
-      ss << "Could not convert parameter " << paramCount << ".";
-      throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
-    }
-
-    printSequence(deMuxedData, seqNum, offset, elements);
+    printSeqList(deMuxedData, seqList, offset, numElements);
   }
 }
 
-dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const char *argv[]) {
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2;
-  devMap<devBase> device = getDevice(argv[pp_device]);
+dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName) {
+  devMap<devBase> device = getDevice(deviceName);
   dma_Accessor_ptr deMuxedData = device.getCustomAccessor<dma_Accessor>(
-      argv[pp_register], argv[pp_module]);
+  		regionName, module);
   deMuxedData->read();
   return deMuxedData;
 }
 
 // expects valid offset and num elements not exceeding sequence length
-void printSequence(const dma_Accessor_ptr &deMuxedData, uint sequence,
-                   uint offset, uint elements) {
-  for (uint i = offset; i < (offset + elements); i++) {
-    std::cout << (*deMuxedData)[sequence][i] << std::endl;
+void printSeqList(const dma_Accessor_ptr &deMuxedData, std::vector<uint> const &seqList, uint offset,
+                  uint elements) {
+  uint elemIndexToStopAt = (offset + elements);
+  for (auto it = seqList.begin(); it != seqList.end(); it++) {
+    for (uint i = offset; i < elemIndexToStopAt; i++) {
+      std::cout << (*deMuxedData)[*it][i] << "\t";
+    }
+    std::cout << std::endl;
   }
 }
 
 void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
   uint numSequences = deMuxedData->getNumberOfDataSequences();
   uint seqLength = (*deMuxedData)[0].size();
-  for (uint rowCount = 0; rowCount < seqLength; rowCount++) {
-    for (uint columnCount = 0; columnCount < numSequences; columnCount++) {
+
+  for (uint columnCount = 0; columnCount < numSequences; columnCount++) {
+    for (uint rowCount = 0; rowCount < seqLength; rowCount++) {
       std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
     }
     std::cout << std::endl;
   }
 }
 
-bool isValidElemCount(const mapFile::mapElem &regInfo, const int32_t elements) {
+std::vector<uint> extractSequenceList(string const & list, uint numSequences) {
+  if (list.empty()) {
+  		std::vector<uint> seqList;
+    return seqList;
+  } // default return value
 
-  if (elements < 0) {
-    throw exBase("numberOfelements to read out cannot be a negative value", 1);
-  } else if (static_cast<uint32_t>(elements) > regInfo.reg_elem_nr) {
-    // Checking for user entered size at this point, because we do not want to
-    // run vector<int32_t/double> values(elements) with a huge value in
-    // elements (can lead to mem allocation failure if too big).
-    throw exBase("Data size exceed register size.", 1);
-  } else if (elements == 0) {
-    return false;
+  std::stringstream listOfSeqNumbers(list);
+  std::string tmpString;
+  std::vector<uint> seqList;
+  seqList.reserve(numSequences);
+
+  uint tmpSeqNum;
+  try {
+    while (std::getline(listOfSeqNumbers, tmpString, ' ')) {
+      tmpSeqNum = std::stoul(tmpString);
+
+      if (tmpSeqNum >= numSequences) {
+        std::stringstream ss;
+        ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
+           << (numSequences - 1) << "]";
+        throw exBase(ss.str(), 1);
+      }
+
+      seqList.push_back(tmpSeqNum);
+    }
+    return seqList;
+  }
+  catch (invalid_argument &ex) {
+    std::stringstream ss;
+    ss << "Could not convert sequence List";
+    throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
+  }
+}
+
+std::vector<string> createArgList(uint argc, const char *argv[], uint maxArgs) {
+  // pre-condition argc <= maxArgs is assumed when invoking this method.
+  std::vector<string> listOfCmdArguments;
+  listOfCmdArguments.reserve(maxArgs);
+
+  for (size_t i = 0; i < argc; i++) {
+    listOfCmdArguments.push_back(argv[i]);
   }
 
-  return true;
+  // rest of the arguments provided represented as empty strings
+  for (size_t i = argc; i < maxArgs; i++) {
+    listOfCmdArguments.push_back("");
+  }
+  return listOfCmdArguments;
+}
+
+uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
+	// TODO: try avoid code duplication with extractNumElements
+  uint offset;
+  if (userEnteredOffset.empty()) {
+    offset = 0;
+  } else {
+    try {
+      offset = std::stoul(userEnteredOffset);
+    }
+    catch (invalid_argument &ex) {
+      throw exBase("Could not convert Offset", 1);
+    }
+  }
+
+  if (offset > maxOffset) {
+    throw exBase("Offset exceed register size.", 1);
+  }
+
+  return offset;
+}
+
+uint extractNumElements(const string &userEnteredValue,
+                        uint validOffset,
+                        uint maxElements) {
+  uint numElements;
+  try {
+    if (userEnteredValue.empty()) {
+      numElements = maxElements - validOffset;
+    } else {
+      numElements = std::stoul(userEnteredValue);
+    }
+  }
+  catch (invalid_argument &ex) {
+    throw exBase("Could not convert numElements to return", 1);
+  }
+  if (numElements > (maxElements - validOffset)) {
+    throw exBase("Data size exceed register size.", 1);
+  }
+  return numElements;
+}
+
+RegisterAccessor_t getRegisterAccessor(const string &deviceName,
+                                       const string &module,
+                                       const string &registerName) {
+  devMap<devBase> device = getDevice(deviceName);
+  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg =
+      device.getRegisterAccessor(registerName, module);
+  return reg;
+}
+
+std::string extractDisplayMode(const string &displayMode) {
+
+  if (displayMode.empty()) {
+    return "raw";
+  } // default
+
+  if ((displayMode != "raw") && (displayMode != "hex")) {
+    throw exBase("Invalid display mode; Use raw | hex", 1);
+  }
+  return displayMode;
 }

@@ -55,7 +55,7 @@ echo "invalid WORD_CLK_MUX offset: 4" >> $actual_console_output
 bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 4 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 echo "invalid WORD_CLK_MUX offset: 5" >> $actual_console_output
 bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 5 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-echo "invalid WORD_CLK_MUX offset: -5" >> $actual_console_output
+echo "invalid WORD_CLK_MUX offset: -5 this is treated as uint and hence data bigger than reg size" >> $actual_console_output
 bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX -5 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 # read with offset, [numelem - valid]

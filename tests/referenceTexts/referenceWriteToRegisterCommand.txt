@@ -1,22 +1,15 @@
 Writing to a bad register NAme
 Cannot find register SOME_NON_EXISTENT_REGISTER in map file: ././mtcadummy_withoutModules.map
 Writing to register without module
-7.80000000e+01
-2.80000000e+01
-9.10000000e+01
-1.00000000e+00
+7.80000000e+01	2.80000000e+01	9.10000000e+01	1.00000000e+00	
 Writing to register with module
-1.40000000e+01
-1.20000000e+01
-1.10000000e+01
-1.44000000e+02
+1.40000000e+01	1.20000000e+01	1.10000000e+01	1.44000000e+02	
 Writing 5 elements to WORD_CLK_MUX (which is 4 elements long)
 Data size exceed register size
 Writing 6 elements to WORD_CLK_MUX (which is 4 elements long)
 Data size exceed register size
 Writing 2 elements to WORD_CLK_MUX from offset 2
-7.80000000e+01
-2.80000000e+01
+7.80000000e+01	2.80000000e+01	
 Writing 1 element to WORD_CLK_MUX from offset 4 <- invalid offset
 Offset exceed register size.
 Writing 1 element to WORD_CLK_MUX from offset 5 <- invalid offset

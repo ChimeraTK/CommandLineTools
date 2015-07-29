@@ -358,16 +358,18 @@ void readRegister(unsigned int argc, const char* argv[])
       cout << std::hex;
     else
       cout << std::fixed;
-    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
-         d++)
-      cout << static_cast<uint32_t>(values[d]) << endl;
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()); d++) {
+      cout << static_cast<uint32_t>(values[d]) << "\t";
+    }
+    std::cout << std::endl;
   } else { // Read with automatic conversion to double
     vector<double> values(numElements);
     reg->read(&(values[0]), numElements, offset);
     cout << std::scientific << std::setprecision(8);
-    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
-         d++)
-      cout << values[d] << endl;
+    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()); d++){
+      cout << values[d] << "\t";
+    }
+    std::cout << std::endl;
   }
 }
 
@@ -463,8 +465,9 @@ void readDmaRawData(unsigned int argc, const char *argv[]) {
   }
   for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
        d++) {
-    cout << static_cast<uint32_t>(values[d]) << endl;
+    cout << static_cast<uint32_t>(values[d]) << "\t";
   }
+  std::cout << std::endl;
 }
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
@@ -514,11 +517,12 @@ void printSeqList(const dma_Accessor_ptr &deMuxedData, std::vector<uint> const &
                   uint elements) {
   uint elemIndexToStopAt = (offset + elements);
   for (auto it = seqList.begin(); it != seqList.end(); it++) {
-    for (uint i = offset; i < elemIndexToStopAt; i++) {
+    for (auto i = offset; i < elemIndexToStopAt; i++) {
       std::cout << (*deMuxedData)[*it][i] << "\t";
     }
-    std::cout << std::endl;
+    std::cout << "\n";
   }
+  std::cout << std::flush;
 }
 
 void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
@@ -529,8 +533,9 @@ void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
     for (uint rowCount = 0; rowCount < seqLength; rowCount++) {
       std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
     }
-    std::cout << std::endl;
+    std::cout << "\n";
   }
+  std::cout << std::flush;
 }
 
 std::vector<uint> extractSequenceList(string const & list, uint numSequences) {

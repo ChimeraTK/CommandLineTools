@@ -30,15 +30,15 @@ using namespace std;
 
 
 // typedefs and Functions declarations
-typedef MultiplexedDataAccessor<double> dma_Accessor;
-typedef boost::shared_ptr<dma_Accessor> dma_Accessor_ptr;
+typedef MultiplexedDataAccessor<double> dma_Accessor_t;
+typedef boost::shared_ptr<dma_Accessor_t> dma_Accessor_ptr_t;
 typedef boost::shared_ptr<devMap<devBase>::RegisterAccessor> RegisterAccessor_t;
 typedef mtca4u::mapFile::mapElem RegisterInfo_t;
 
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
-dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName);
-void printSeqList (const dma_Accessor_ptr& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
-void printAllSequences(const dma_Accessor_ptr& deMuxedData);
+dma_Accessor_ptr_t getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName);
+void printSeqList (const dma_Accessor_ptr_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
+void printAllSequences(const dma_Accessor_ptr_t& deMuxedData);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
 std::vector<uint> extractSequenceList(string const & list, uint maxSeq);
 uint extractOffset(string const & userEnteredOffset, uint maxOffset);
@@ -482,7 +482,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
-  dma_Accessor_ptr deMuxedData = getFilledOutMultiplexedDataAccesor(
+  dma_Accessor_ptr_t deMuxedData = getFilledOutMultiplexedDataAccesor(
       argList[pp_deviceName], argList[pp_module], argList[pp_register]);
 
   if (argc == 3) {
@@ -504,16 +504,16 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   }
 }
 
-dma_Accessor_ptr getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName) {
+dma_Accessor_ptr_t getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName) {
   devMap<devBase> device = getDevice(deviceName);
-  dma_Accessor_ptr deMuxedData = device.getCustomAccessor<dma_Accessor>(
+  dma_Accessor_ptr_t deMuxedData = device.getCustomAccessor<dma_Accessor_t>(
   		regionName, module);
   deMuxedData->read();
   return deMuxedData;
 }
 
 // expects valid offset and num elements not exceeding sequence length
-void printSeqList(const dma_Accessor_ptr &deMuxedData, std::vector<uint> const &seqList, uint offset,
+void printSeqList(const dma_Accessor_ptr_t &deMuxedData, std::vector<uint> const &seqList, uint offset,
                   uint elements) {
   uint elemIndexToStopAt = (offset + elements);
   for (auto it = seqList.begin(); it != seqList.end(); it++) {
@@ -525,7 +525,7 @@ void printSeqList(const dma_Accessor_ptr &deMuxedData, std::vector<uint> const &
   std::cout << std::flush;
 }
 
-void printAllSequences(const dma_Accessor_ptr &deMuxedData) {
+void printAllSequences(const dma_Accessor_ptr_t &deMuxedData) {
   uint numSequences = deMuxedData->getNumberOfDataSequences();
   uint seqLength = (*deMuxedData)[0].size();
 

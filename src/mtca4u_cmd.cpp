@@ -262,7 +262,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
   unsigned int index = 0;
-  for (std::vector<mapFile::mapElem>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
+  for (std::vector<RegisterInfo_t>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
     // print out module name if present
     if(cit->reg_module.empty()){
 	cout << cit->reg_name.c_str() << "\t";
@@ -287,9 +287,9 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
 
   devMap<devBase> device = getDevice(argv[0]);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[2], argv[1]);
+  RegisterAccessor_t reg = device.getRegisterAccessor(argv[2], argv[1]);
   
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
+  RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
   cout << regInfo.reg_name.c_str() << "\t" << regInfo.reg_elem_nr << "\t\t" << regInfo.reg_signed << "\t\t";
@@ -309,7 +309,7 @@ void getRegisterSize(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
 
   devMap<devBase> device = getDevice(argv[0]);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[2], argv[1]);
+  RegisterAccessor_t reg = device.getRegisterAccessor(argv[2], argv[1]);
 
   cout << reg->getRegisterInfo().reg_elem_nr << std::endl;
 }
@@ -389,8 +389,8 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw exBase("Not enough input arguments.", 1);
   }
   devMap<devBase> device = getDevice(argv[pp_device]);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
-  mapFile::mapElem regInfo = reg->getRegisterInfo();
+  RegisterAccessor_t reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
+  RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   // TODO: Consider extracting this snippet to a helper method as we use the
   // same check in read command as well
@@ -633,7 +633,7 @@ RegisterAccessor_t getRegisterAccessor(const string &deviceName,
                                        const string &module,
                                        const string &registerName) {
   devMap<devBase> device = getDevice(deviceName);
-  boost::shared_ptr<devMap<devBase>::RegisterAccessor> reg =
+  RegisterAccessor_t reg =
       device.getRegisterAccessor(registerName, module);
   return reg;
 }

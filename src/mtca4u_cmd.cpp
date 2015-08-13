@@ -45,6 +45,7 @@ uint extractOffset(string const & userEnteredOffset, uint maxOffset);
 uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements);
 RegisterAccessor_t getRegisterAccessor(const string &deviceName, const string &module, const string &registerName);
 std::string extractDisplayMode(const string &displayMode);
+void insertAllSequenceNumbersToList(const dma_Accessor_ptr_t& deMuxedData, std::vector<uint> &seqList);
 
 typedef void (*CmdFnc)(unsigned int, const char **);
 
@@ -485,23 +486,23 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   dma_Accessor_ptr_t deMuxedData = getFilledOutMultiplexedDataAccesor(
       argList[pp_deviceName], argList[pp_module], argList[pp_register]);
 
-  if (argc == 3) {
-    printAllSequences(deMuxedData);
-  } else {
-    uint sequenceLength = (*deMuxedData)[0].size();
-    uint numSequences = (*deMuxedData).getNumberOfDataSequences();
-    std::vector<uint> seqList =
-        extractSequenceList(argList[pp_seqList], numSequences);
-    uint maxOffset = sequenceLength - 1;
-    uint offset = extractOffset(argList[pp_offset], maxOffset);
-    uint numElements =
-        extractNumElements(argList[pp_elements], offset, sequenceLength);
-
-    if (numElements == 0) {
-      return;
-    }
-    printSeqList(deMuxedData, seqList, offset, numElements);
+  uint sequenceLength = (*deMuxedData)[0].size();
+  uint numSequences = (*deMuxedData).getNumberOfDataSequences();
+  std::vector<uint> seqList =
+      extractSequenceList(argList[pp_seqList], numSequences);
+  if (seqList.size() == 0) {
+    // This will print all sequences when the list is empty
+    insertAllSequenceNumbersToList(deMuxedData, seqList);
   }
+  uint maxOffset = sequenceLength - 1;
+  uint offset = extractOffset(argList[pp_offset], maxOffset);
+  uint numElements =
+      extractNumElements(argList[pp_elements], offset, sequenceLength);
+
+  if (numElements == 0) {
+    return;
+  }
+  printSeqList(deMuxedData, seqList, offset, numElements);
 }
 
 dma_Accessor_ptr_t getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName) {
@@ -519,19 +520,6 @@ void printSeqList(const dma_Accessor_ptr_t &deMuxedData, std::vector<uint> const
   for (auto i = offset; i < elemIndexToStopAt; i++) {
     for (auto it = seqList.begin(); it != seqList.end(); it++) {
       std::cout << (*deMuxedData)[*it][i] << "\t";
-    }
-    std::cout << "\n";
-  }
-  std::cout << std::flush;
-}
-
-void printAllSequences(const dma_Accessor_ptr_t &deMuxedData) {
-  uint numSequences = deMuxedData->getNumberOfDataSequences();
-  uint seqLength = (*deMuxedData)[0].size();
-
-  for (uint rowCount = 0; rowCount < seqLength; rowCount++) {
-    for (uint columnCount = 0; columnCount < numSequences; columnCount++) {
-      std::cout << (*deMuxedData)[columnCount][rowCount] << "\t";
     }
     std::cout << "\n";
   }
@@ -648,4 +636,12 @@ std::string extractDisplayMode(const string &displayMode) {
     throw exBase("Invalid display mode; Use raw | hex", 1);
   }
   return displayMode;
+}
+
+void insertAllSequenceNumbersToList(const dma_Accessor_ptr_t &deMuxedData,
+                                          std::vector<uint> &seqList) {
+	uint numSequences = deMuxedData->getNumberOfDataSequences();
+	for(uint index = 0; index < numSequences; ++index){
+			seqList.push_back(index);
+	}
 }

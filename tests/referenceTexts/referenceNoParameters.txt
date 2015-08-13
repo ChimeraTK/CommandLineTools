@@ -13,7 +13,7 @@ Available commands are:
   read		Board Module Register [offset] [elements] [raw | hex]	Read data from Board
   write		Board Module Register Value [offset]		Write data to Board
   read_dma_raw	Board Module Register [offset] [elements] [raw | hex]		Read raw 32 bit values from DMA registers without Fixed point conversion
-  read_seq	Board Module DataRegionName [sequenceNumber] [Offset] [numElements]	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
+  read_seq	Board Module DataRegionName ["sequenceList"] [Offset] [numElements]	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
 
 
 For further help or bug reports please contact michael.heuer@desy.de

@@ -38,7 +38,6 @@ typedef mtca4u::mapFile::mapElem RegisterInfo_t;
 devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
 dma_Accessor_ptr_t getFilledOutMultiplexedDataAccesor(const string &deviceName, const string &module, const string &regionName);
 void printSeqList (const dma_Accessor_ptr_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
-void printAllSequences(const dma_Accessor_ptr_t& deMuxedData);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
 std::vector<uint> extractSequenceList(string const & list, uint maxSeq);
 uint extractOffset(string const & userEnteredOffset, uint maxOffset);
@@ -485,15 +484,10 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 
   dma_Accessor_ptr_t deMuxedData = getFilledOutMultiplexedDataAccesor(
       argList[pp_deviceName], argList[pp_module], argList[pp_register]);
-
   uint sequenceLength = (*deMuxedData)[0].size();
   uint numSequences = (*deMuxedData).getNumberOfDataSequences();
   std::vector<uint> seqList =
       extractSequenceList(argList[pp_seqList], numSequences);
-  if (seqList.size() == 0) {
-    // This will print all sequences when the list is empty
-    insertAllSequenceNumbersToList(deMuxedData, seqList);
-  }
   uint maxOffset = sequenceLength - 1;
   uint offset = extractOffset(argList[pp_offset], maxOffset);
   uint numElements =
@@ -501,6 +495,10 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 
   if (numElements == 0) {
     return;
+  }
+  if (seqList.size() == 0) {
+    // Print out all sequences when you have an empty list specified by the user
+    insertAllSequenceNumbersToList(deMuxedData, seqList);
   }
   printSeqList(deMuxedData, seqList, offset, numElements);
 }

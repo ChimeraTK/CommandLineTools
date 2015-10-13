@@ -61,5 +61,9 @@ $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX >> $actual_console_output 2>&1
 echo "invoke command with incomplete parameters" >> $actual_console_output 2>&1 
 $mtca4u_executable write  DUMMY1 "" >> $actual_console_output 2>&1
 
+sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toFixedPoint()./d" -i $actual_console_output
+sed -e "/Please use toRaw() instead./d" -i $actual_console_output
+sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toDouble()./d" -i $actual_console_output
+sed -e "/Please use toCooked() instead./d" -i $actual_console_output
 
 diff $actual_console_output $expected_console_output

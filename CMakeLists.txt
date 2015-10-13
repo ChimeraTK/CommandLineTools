@@ -9,8 +9,8 @@ set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
  
-FIND_PACKAGE(MtcaMappedDevice 00.17 REQUIRED)
-include_directories(${MtcaMappedDevice_INCLUDE_DIRS})
+FIND_PACKAGE(mtca4u-deviceaccess 00.00 REQUIRED)
+include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 
 #use -DCMAKE_BUILD_TYPE=Debug then configuring to turn on the coverage tests (and debug symbols)
 
@@ -34,6 +34,7 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+FIND_PACKAGE(Boost COMPONENTS system filesystem)
 #The boost header-only development files are required
 FIND_PACKAGE(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -51,7 +52,7 @@ configure_file(cmake/referenceVersionCommand.txt.in
 
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
-target_link_libraries(mtca4u ${MtcaMappedDevice_LIBRARIES})    
+target_link_libraries(mtca4u ${mtca4u-deviceaccess_LIBRARIES} ${Boost_LIBRARIES})    
 
 #change the install prefix to the source directory in case the user has not specified a destination 
 #i. e. CMAKE_INSTALL_PREFIX is not set manually

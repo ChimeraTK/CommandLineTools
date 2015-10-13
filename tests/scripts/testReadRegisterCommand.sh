@@ -86,4 +86,9 @@ bash -c '$0 read DUMMY2 >> $1  2>&1' $mtca4u_executable $actual_console_output
 echo "Command called with bad device name" >> $actual_console_output
 bash -c '$0 read NON_EXISTENT_DEVICE ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
+sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toFixedPoint()./d" -i $actual_console_output
+sed -e "/Please use toRaw() instead./d" -i $actual_console_output
+sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toDouble()./d" -i $actual_console_output
+sed -e "/Please use toCooked() instead./d" -i $actual_console_output
+
 diff $actual_console_output $expected_console_output

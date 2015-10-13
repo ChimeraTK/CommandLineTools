@@ -17,9 +17,11 @@
 #include <stdexcept>
 #include <cstdlib>
 
-#include <MtcaMappedDevice/dmapFilesParser.h>
-#include <MtcaMappedDevice/devMap.h>
-#include <MtcaMappedDevice/MultiplexedDataAccessor.h>
+#include <mtca4u/DMapFilesParser.h>
+#include <mtca4u/Device.h>
+#include <mtca4u/MultiplexedDataAccessor.h>
+#include <mtca4u/BackendFactory.h>
+
 
 #include <boost/algorithm/string.hpp>
 
@@ -32,10 +34,13 @@ using namespace std;
 // typedefs and Functions declarations
 typedef MultiplexedDataAccessor<double> dma_Accessor_t;
 typedef boost::shared_ptr<dma_Accessor_t> dma_Accessor_ptr_t;
-typedef boost::shared_ptr<devMap<devBase>::RegisterAccessor> RegisterAccessor_t;
-typedef mtca4u::mapFile::mapElem RegisterInfo_t;
 
-devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName);
+//typedef boost::shared_ptr<Device<DummyBackend>::RegisterAccessor> RegisterAccessor_t;
+typedef boost::shared_ptr<Device::RegisterAccessor> RegisterAccessor_t;
+typedef mtca4u::RegisterInfoMap::RegisterInfo RegisterInfo_t;
+
+//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > getDevice(const string& deviceName, const string &dmapFileName);
+boost::shared_ptr< mtca4u::Device> getDevice(const string& deviceName, const string &dmapFileName);
 dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName);
 void printSeqList (const dma_Accessor_ptr_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
@@ -76,7 +81,7 @@ vector<Command> vectorOfCommands = {
   Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
   Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [\"sequenceList\"] [Offset] [numElements]")
 };
-
+static BackendFactory FactoryInstance = BackendFactory::getInstance();
 /**
  * @brief Main Entry Function
  *
@@ -122,7 +127,7 @@ int main(int argc, const char* argv[])
     else it->pCallback(argc - 2, &argv[2]);
   }
 
-  catch ( exBase &e )
+  catch ( Exception &e )
   {
     cerr << e.what() << endl;
     return 1;
@@ -137,34 +142,41 @@ int main(int argc, const char* argv[])
  * @param[in] dmapFileName File to be loaded or all in the current directory if empty
  *
  */
-devMap<devBase> getDevice(const string& deviceName, const string &dmapFileName = "")
+boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName, const string &dmapFileName = "")
 {
-  dmapFilesParser filesParser(".");
+  DMapFilesParser filesParser;//(".");
   
-  if (dmapFileName.empty())
-    filesParser.parse_dir(".");
+  if (dmapFileName.empty()) // this will have undefined behaviour if factory is using some other dmap file
+  {
+  	std::string testFilePath = boost::filesystem::initial_path().string() + (std::string)TEST_DMAP_FILE_PATH;
+		filesParser.parse_file(testFilePath);
+  }
   else
     filesParser.parse_file(dmapFileName);
-  
-  dmapFilesParser::iterator it = filesParser.begin();
-  
+
+  DMapFilesParser::iterator it = filesParser.begin();
+
   for (; it != filesParser.end(); ++it)
   {
     if (deviceName == it->first.dev_name)
       break;    
   }
   if(it == filesParser.end()){
-      throw exBase("Unknown device '" + deviceName + "'.", 2);
+      throw Exception("Unknown device '" + deviceName + "'.", 2);
   }
-  boost::shared_ptr <mtca4u::devBase> pcieDevice (new mtca4u::devPCIE());
-  pcieDevice->openDev(it->first.dev_file);
+
+  //boost::shared_ptr <mtca4u::DummyBackend> pcieDevice (new mtca4u::PcieBackend());
+  //pcieDevice->openDev(it->first.dev_file);
 
   // creating the mapped device and puuting an opened pcie device in it. By
   // using devBase as the template argument, there is a flexibility of putting
   // other kinds of devices inside this mapped device.
-  devMap<mtca4u::devBase> tempDevice;
-  tempDevice.openDev(pcieDevice, it->second);
-
+  //Device<mtca4u::DummyBackend> tempDevice;
+  //tempDevice.openDev(pcieDevice, it->second);
+  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > tempDevice =
+  //FactoryInstance.createDevice(it->first.dev_name);
+  boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
+  tempDevice->open(it->first.dev_name);
   return tempDevice;
 
 }
@@ -209,27 +221,30 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 { 
-  dmapFilesParser filesParser(".");
-  filesParser.parse_dir(".");
-  
+  DMapFilesParser filesParser;
+  filesParser.parse_file("dummies.dmap");
   cout << endl << "Available devices: " << endl << endl;
   cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
   
-  dmapFilesParser::iterator it = filesParser.begin();
-  
+  DMapFilesParser::iterator it = filesParser.begin();
+
   for (; it != filesParser.end(); ++it)
   {
-    devMap<devPCIE> tempDevice;
-	
+    //Device<PciDevice> tempDevice;
+  	 //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > tempDevice
+			//	= FactoryInstance.createDevice(it->first.dev_name);
+  	boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
+		tempDevice->open(it->first.dev_name);
+
 	bool available = false;
 	int32_t firmware = 0;
     int32_t revision = 0;
 		
     try { 
-      tempDevice.openDev(it->first.dev_file, it->first.map_file_name);
-	  tempDevice.readReg("WORD_FIRMWARE",&firmware);
-	  tempDevice.readReg("WORD_REVISION",&revision);
-	  tempDevice.closeDev();
+      //tempDevice.openDev(it->first.dev_file, it->first.map_file_name);
+	  tempDevice->readReg("WORD_FIRMWARE",&firmware);
+	  tempDevice->readReg("WORD_REVISION",&revision);
+	  tempDevice->close();
 	  available = true;
     }
 	catch(...) {}
@@ -253,11 +268,14 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 void getDeviceInfo(unsigned int argc, const char* argv[])
 {
   if(argc < 1)
-    throw exBase("Not enough input arguments.", 1);
-  
-  devMap<devBase> device = getDevice(argv[0]);
+    throw Exception("Not enough input arguments.", 1);
 
-  boost::shared_ptr<const mtca4u::mapFile> map = device.getRegisterMap();
+  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
+
+  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+
+
+  boost::shared_ptr<const mtca4u::RegisterInfoMap> map = device->getRegisterMap();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
@@ -272,6 +290,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
     cout << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
     cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
+
 }
 
 /**
@@ -284,10 +303,11 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 void getRegisterInfo(unsigned int argc, const char *argv[])
 {
   if(argc < 3)
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
 
-  devMap<devBase> device = getDevice(argv[0]);
-  RegisterAccessor_t reg = device.getRegisterAccessor(argv[2], argv[1]);
+	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+  RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
   
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
@@ -306,12 +326,14 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
 void getRegisterSize(unsigned int argc, const char *argv[])
 {
   if(argc < 3)
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
 
-  devMap<devBase> device = getDevice(argv[0]);
-  RegisterAccessor_t reg = device.getRegisterAccessor(argv[2], argv[1]);
+	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+  RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
 
   cout << reg->getRegisterInfo().reg_elem_nr << std::endl;
+
 }
 
 /**
@@ -328,7 +350,7 @@ void readRegister(unsigned int argc, const char* argv[])
   const unsigned int maxCmdArgs = 6;
   
   if(argc < 3){
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
   }
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
@@ -353,7 +375,7 @@ void readRegister(unsigned int argc, const char* argv[])
   // Read as raw values
   if ((cmode == "raw") || (cmode == "hex")) {
     vector<int32_t> values(numElements);
-    reg->readReg(&(values[0]), numElements * 4, offset * 4);
+    reg->readRaw(&(values[0]), numElements * 4, offset * 4);
     if (cmode == "hex")
       cout << std::hex;
     else
@@ -386,17 +408,19 @@ void writeRegister(unsigned int argc, const char *argv[])
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
   
   if(argc < 4){
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
   }
-  devMap<devBase> device = getDevice(argv[pp_device]);
-  RegisterAccessor_t reg = device.getRegisterAccessor(argv[pp_register],argv[pp_module]);
+
+	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[pp_device]);
+	boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
+  RegisterAccessor_t reg = device->getRegisterAccessor(argv[pp_register],argv[pp_module]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   // TODO: Consider extracting this snippet to a helper method as we use the
   // same check in read command as well
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
   if (regInfo.reg_elem_nr <= offset){
-      throw exBase("Offset exceed register size.", 1);
+      throw Exception("Offset exceed register size.", 1);
   }
 
   std::vector<string> vS;
@@ -409,13 +433,14 @@ void writeRegister(unsigned int argc, const char *argv[])
     std::transform(vS.begin(), vS.end(), vD.begin(), [](const string& s){ return stod(s); });
   }
   catch(invalid_argument &ex) {
-    throw exBase("Could not convert parameter to double.",3);// + d + " to double: " + ex.what(), 3);
+    throw Exception("Could not convert parameter to double.",3);// + d + " to double: " + ex.what(), 3);
   }
   catch(out_of_range &ex) {
-    throw exBase("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
+    throw Exception("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
   reg->write(&(vD[0]), vD.size(), offset);
+
 }
 
  /**
@@ -433,7 +458,7 @@ void readDmaRawData(unsigned int argc, const char *argv[]) {
   const unsigned int maxCmdArgs = 6;
 
   if (argc < 3) {
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
   }
 
   // validate argc
@@ -475,7 +500,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int pp_deviceName = 0, pp_module = 1, pp_register = 2,
                      pp_seqList = 3, pp_offset = 4, pp_elements = 5;
   if (argc < 3) {
-    throw exBase("Not enough input arguments.", 1);
+    throw Exception("Not enough input arguments.", 1);
   }
 
   // validate argc
@@ -504,8 +529,10 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 }
 
 dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
-  devMap<devBase> device = getDevice(deviceName);
-  dma_Accessor_ptr_t deMuxedData = device.getCustomAccessor<dma_Accessor_t>(
+
+	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(deviceName);
+	boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
+  dma_Accessor_ptr_t deMuxedData = device->getCustomAccessor<dma_Accessor_t>(
   		regionName, module);
   deMuxedData->read();
   return deMuxedData;
@@ -543,7 +570,7 @@ std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_pt
         std::stringstream ss;
         ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
            << (numSequences - 1) << "]";
-        throw exBase(ss.str(), 1);
+        throw Exception(ss.str(), 1);
       }
 
       seqList.push_back(tmpSeqNum);
@@ -553,7 +580,7 @@ std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_pt
   catch (invalid_argument &ex) {
     std::stringstream ss;
     ss << "Could not convert sequence List";
-    throw exBase(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
+    throw Exception(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
   }
 }
 
@@ -583,12 +610,12 @@ uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
       offset = std::stoul(userEnteredOffset);
     }
     catch (invalid_argument &ex) {
-      throw exBase("Could not convert Offset", 1);
+      throw Exception("Could not convert Offset", 1);
     }
   }
 
   if (offset > maxOffset) {
-    throw exBase("Offset exceed register size.", 1);
+    throw Exception("Offset exceed register size.", 1);
   }
 
   return offset;
@@ -606,10 +633,10 @@ uint extractNumElements(const string &userEnteredValue,
     }
   }
   catch (invalid_argument &ex) {
-    throw exBase("Could not convert numElements to return", 1);
+    throw Exception("Could not convert numElements to return", 1);
   }
   if (numElements > (maxElements - validOffset)) {
-    throw exBase("Data size exceed register size.", 1);
+    throw Exception("Data size exceed register size.", 1);
   }
   return numElements;
 }
@@ -617,8 +644,9 @@ uint extractNumElements(const string &userEnteredValue,
 RegisterAccessor_t getRegisterAccessor(const string &deviceName,
                                        const string &module,
                                        const string &registerName) {
-  devMap<devBase> device = getDevice(deviceName);
-  RegisterAccessor_t reg = device.getRegisterAccessor(registerName, module);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
+  RegisterAccessor_t reg =
+	device->getRegisterAccessor(registerName, module);
   return reg;
 }
 
@@ -629,7 +657,7 @@ std::string extractDisplayMode(const string &displayMode) {
   } // default
 
   if ((displayMode != "raw") && (displayMode != "hex")) {
-    throw exBase("Invalid display mode; Use raw | hex", 1);
+    throw Exception("Invalid display mode; Use raw | hex", 1);
   }
   return displayMode;
 }

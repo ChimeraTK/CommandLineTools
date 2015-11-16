@@ -65,6 +65,7 @@ void getDeviceInfo(unsigned int, const char **);
 void getRegisterInfo(unsigned int, const char **);
 void getRegisterSize(unsigned int, const char **);
 void readRegister(unsigned int, const char **);
+void readRegisterInternal(std::vector<string> argList);
 void writeRegister(unsigned int, const char **);
 void readDmaRawData(unsigned int, const char **);
 void readMultiplexedData(unsigned int , const char **);
@@ -346,7 +347,6 @@ void getRegisterSize(unsigned int argc, const char *argv[])
  */
 void readRegister(unsigned int argc, const char* argv[])
 {
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
   const unsigned int maxCmdArgs = 6;
   
   if(argc < 3){
@@ -355,6 +355,13 @@ void readRegister(unsigned int argc, const char* argv[])
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
+  
+  readRegisterInternal(argList);
+}
+
+void readRegisterInternal(std::vector<string> argList)
+{
+  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
 
   RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
                                                 argList[pp_module],
@@ -370,8 +377,8 @@ void readRegister(unsigned int argc, const char* argv[])
   if (numElements == 0) {
     return;
   }
-// TODO: adapt extractDisplayMode and use here
-  string cmode = (argc > pp_cmode) ? argv[pp_cmode] : "double";
+
+  string cmode = extractDisplayMode(argList[pp_cmode]);
   // Read as raw values
   if ((cmode == "raw") || (cmode == "hex")) {
     vector<int32_t> values(numElements);
@@ -451,48 +458,24 @@ void writeRegister(unsigned int argc, const char *argv[])
   *
   * Parameter: device, register, [offset], [elements], [display_mode]
   */
-void readDmaRawData(unsigned int argc, const char *argv[]) {
-
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2,
-                     pp_offset = 3, pp_elements = 4, pp_dmode = 5;
+void readDmaRawData(unsigned int argc, const char *argv[])
+{
+  const unsigned int pp_cmode = 5;
   const unsigned int maxCmdArgs = 6;
-
-  if (argc < 3) {
+  
+  if(argc < 3){
     throw Exception("Not enough input arguments.", 1);
   }
-
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
-
-  RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
-                                                argList[pp_module],
-                                                argList[pp_register]);
-  RegisterInfo_t regInfo = reg->getRegisterInfo();
-
-  uint maxElements = regInfo.reg_elem_nr;
-  uint maxOffset = maxElements - 1;
-  uint offset = extractOffset(argList[pp_offset], maxOffset);
-  uint numElements =
-      extractNumElements(argList[pp_elements], offset, maxElements);
-  if (numElements == 0) {
-    return;
+  
+  if(argList.size() <= pp_cmode || argList[pp_cmode] == "") {
+    argList.resize(pp_cmode+1);
+    argList[pp_cmode] = "raw";
   }
-
-  std::string displayMode = extractDisplayMode(argList[pp_dmode]);
-  vector<int32_t> values(numElements);
-  reg->readDMA(&(values[0]), numElements * 4, offset * 4);
-
-  if (displayMode == "hex") {
-    cout << std::hex;
-  } else {
-    cout << std::fixed;
-  }
-  for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size());
-       d++) {
-    cout << static_cast<uint32_t>(values[d]) << "\n";
-  }
-  std::cout << std::flush;
+  
+  readRegisterInternal(argList);
 }
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
@@ -653,10 +636,10 @@ RegisterAccessor_t getRegisterAccessor(const string &deviceName,
 std::string extractDisplayMode(const string &displayMode) {
 
   if (displayMode.empty()) {
-    return "raw";
+    return "double";
   } // default
 
-  if ((displayMode != "raw") && (displayMode != "hex")) {
+  if ((displayMode != "raw") && (displayMode != "hex") && (displayMode != "double")) {
     throw Exception("Invalid display mode; Use raw | hex", 1);
   }
   return displayMode;

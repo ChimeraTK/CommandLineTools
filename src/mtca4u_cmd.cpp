@@ -71,16 +71,16 @@ void readDmaRawData(unsigned int, const char **);
 void readMultiplexedData(unsigned int , const char **);
 
 vector<Command> vectorOfCommands = {
-  Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
-  Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
-  Command("info",&getInfo,"Prints all devices","\t\t\t\t\t"),
-  Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t\t"),
-  Command("register_info",&getRegisterInfo,"Prints the register infos","Board Module Register \t\t"),
-  Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
-  Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
-  Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
-  Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
-  Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [\"sequenceList\"] [Offset] [numElements]")
+    Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
+    Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
+    Command("info",&getInfo,"Prints all devices","\t\t\t\t\t"),
+    Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t\t"),
+    Command("register_info",&getRegisterInfo,"Prints the register infos","Board Module Register \t\t"),
+    Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
+    Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
+    Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
+    Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
+    Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [\"sequenceList\"] [Offset] [numElements]")
 };
 static BackendFactory FactoryInstance = BackendFactory::getInstance();
 /**
@@ -97,13 +97,13 @@ int main(int argc, const char* argv[])
     PrintHelp(argc, argv);
     return 1;
   }
-    
+
   string cmd = argv[1];
   transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
   try {
     vector<Command>::iterator it = vectorOfCommands.begin();
-		
+
     // Look for the right command
     for (; it != vectorOfCommands.end(); ++it)
     {
@@ -133,7 +133,7 @@ int main(int argc, const char* argv[])
     cerr << e.what() << endl;
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -144,13 +144,13 @@ int main(int argc, const char* argv[])
  *
  */
 boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName, const string &dmapFileName = "")
-{
+    {
   DMapFilesParser filesParser;//(".");
-  
+
   if (dmapFileName.empty()) // this will have undefined behaviour if factory is using some other dmap file
   {
-  	std::string testFilePath = boost::filesystem::initial_path().string() + (std::string)TEST_DMAP_FILE_PATH;
-		filesParser.parse_file(testFilePath);
+    std::string testFilePath = boost::filesystem::initial_path().string() + (std::string)TEST_DMAP_FILE_PATH;
+    filesParser.parse_file(testFilePath);
   }
   else
     filesParser.parse_file(dmapFileName);
@@ -159,28 +159,19 @@ boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName, const st
 
   for (; it != filesParser.end(); ++it)
   {
-    if (deviceName == it->first.dev_name)
+    if (deviceName == it->first.deviceName)
       break;    
   }
   if(it == filesParser.end()){
-      throw Exception("Unknown device '" + deviceName + "'.", 2);
+    throw Exception("Unknown device '" + deviceName + "'.", 2);
   }
 
-  //boost::shared_ptr <mtca4u::DummyBackend> pcieDevice (new mtca4u::PcieBackend());
-  //pcieDevice->openDev(it->first.dev_file);
 
-  // creating the mapped device and puuting an opened pcie device in it. By
-  // using devBase as the template argument, there is a flexibility of putting
-  // other kinds of devices inside this mapped device.
-  //Device<mtca4u::DummyBackend> tempDevice;
-  //tempDevice.openDev(pcieDevice, it->second);
-  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > tempDevice =
-  //FactoryInstance.createDevice(it->first.dev_name);
   boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
-  tempDevice->open(it->first.dev_name);
+  tempDevice->open(it->first.deviceName);
   return tempDevice;
 
-}
+    }
 
 /**
  * @brief PrintHelp shows the help text on the console
@@ -226,34 +217,31 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
   filesParser.parse_file("dummies.dmap");
   cout << endl << "Available devices: " << endl << endl;
   cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
-  
+
   DMapFilesParser::iterator it = filesParser.begin();
 
   for (; it != filesParser.end(); ++it)
   {
-    //Device<PciDevice> tempDevice;
-  	 //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > tempDevice
-			//	= FactoryInstance.createDevice(it->first.dev_name);
-  	boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
-		tempDevice->open(it->first.dev_name);
+    boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
+    tempDevice->open(it->first.deviceName);
 
-	bool available = false;
-	int32_t firmware = 0;
+    bool available = false;
+    int32_t firmware = 0;
     int32_t revision = 0;
-		
-    try { 
-      //tempDevice.openDev(it->first.dev_file, it->first.map_file_name);
-	  tempDevice->readReg("WORD_FIRMWARE",&firmware);
-	  tempDevice->readReg("WORD_REVISION",&revision);
-	  tempDevice->close();
-	  available = true;
-    }
-	catch(...) {}
 
-    cout << it->first.dev_name << "\t" << it->first.dev_file << "\t\t" << it->first.map_file_name << "\t";
-	if (available)
-	  cout << firmware << "\t\t" << revision << endl;
-	else cout << "na" << "\t\t" << "na" << endl;
+    try { 
+      //tempDevice.openDev(it->first.uri, it->first.mapFileName);
+      tempDevice->readReg("WORD_FIRMWARE",&firmware);
+      tempDevice->readReg("WORD_REVISION",&revision);
+      tempDevice->close();
+      available = true;
+    }
+    catch(...) {}
+
+    cout << it->first.deviceName << "\t" << it->first.uri << "\t\t" << it->first.mapFileName << "\t";
+    if (available)
+      cout << firmware << "\t\t" << revision << endl;
+    else cout << "na" << "\t\t" << "na" << endl;
   }
   cout << endl;
 }
@@ -283,13 +271,13 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   unsigned int index = 0;
   for (std::vector<RegisterInfo_t>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
     // print out module name if present
-    if(cit->reg_module.empty()){
-	cout << cit->reg_name.c_str() << "\t";
+    if(cit->module.empty()){
+      cout << cit->name.c_str() << "\t";
     } else {
-	cout << cit->reg_module << "." << cit->reg_name.c_str() << "\t";
+      cout << cit->module << "." << cit->name.c_str() << "\t";
     }
-    cout << cit->reg_elem_nr << "\t\t" << cit->reg_signed << "\t\t";
-    cout << cit->reg_width << "\t\t" << cit->reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
+    cout << cit->nElements << "\t\t" << cit->signedFlag << "\t\t";
+    cout << cit->width << "\t\t" << cit->nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
 
 }
@@ -306,15 +294,15 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
   if(argc < 3)
     throw Exception("Not enough input arguments.", 1);
 
-	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
+  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
-  
+
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
-  cout << regInfo.reg_name.c_str() << "\t" << regInfo.reg_elem_nr << "\t\t" << regInfo.reg_signed << "\t\t";
-  cout << regInfo.reg_width << "\t\t" << regInfo.reg_frac_bits << "\t\t\t" << " " << endl; // ToDo: Add Description
+  cout << regInfo.name.c_str() << "\t" << regInfo.nElements << "\t\t" << regInfo.signedFlag << "\t\t";
+  cout << regInfo.width << "\t\t" << regInfo.nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
 }
 
 /**
@@ -329,11 +317,11 @@ void getRegisterSize(unsigned int argc, const char *argv[])
   if(argc < 3)
     throw Exception("Not enough input arguments.", 1);
 
-	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
+
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
 
-  cout << reg->getRegisterInfo().reg_elem_nr << std::endl;
+  cout << reg->getRegisterInfo().nElements << std::endl;
 
 }
 
@@ -348,14 +336,14 @@ void getRegisterSize(unsigned int argc, const char *argv[])
 void readRegister(unsigned int argc, const char* argv[])
 {
   const unsigned int maxCmdArgs = 6;
-  
+
   if(argc < 3){
     throw Exception("Not enough input arguments.", 1);
   }
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
-  
+
   readRegisterInternal(argList);
 }
 
@@ -364,13 +352,13 @@ void readRegisterInternal(std::vector<string> argList)
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
 
   RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
-                                                argList[pp_module],
-                                                argList[pp_register]);
+      argList[pp_module],
+      argList[pp_register]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
-  
-  uint maxElements = regInfo.reg_elem_nr;
+
+  uint maxElements = regInfo.nElements;
   uint maxOffset = maxElements - 1;
-  
+
   uint offset = extractOffset(argList[pp_offset], maxOffset);
   uint numElements =
       extractNumElements(argList[pp_elements], offset, maxElements);
@@ -387,7 +375,7 @@ void readRegisterInternal(std::vector<string> argList)
       cout << std::hex;
     else
       cout << std::fixed;
-    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()); d++) {
+    for (unsigned int d = 0; (d < regInfo.nElements) && (d < values.size()); d++) {
       cout << static_cast<uint32_t>(values[d]) << "\n";
     }
     std::cout << std::flush;
@@ -395,7 +383,7 @@ void readRegisterInternal(std::vector<string> argList)
     vector<double> values(numElements);
     reg->read(&(values[0]), numElements, offset);
     cout << std::scientific << std::setprecision(8);
-    for (unsigned int d = 0; (d < regInfo.reg_elem_nr) && (d < values.size()); d++){
+    for (unsigned int d = 0; (d < regInfo.nElements) && (d < values.size()); d++){
       cout << values[d] << "\n";
     }
     std::cout << std::flush;
@@ -413,21 +401,20 @@ void readRegisterInternal(std::vector<string> argList)
 void writeRegister(unsigned int argc, const char *argv[])
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
-  
+
   if(argc < 4){
     throw Exception("Not enough input arguments.", 1);
   }
 
-	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[pp_device]);
-	boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[pp_register],argv[pp_module]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   // TODO: Consider extracting this snippet to a helper method as we use the
   // same check in read command as well
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-  if (regInfo.reg_elem_nr <= offset){
-      throw Exception("Offset exceed register size.", 1);
+  if (regInfo.nElements <= offset){
+    throw Exception("Offset exceed register size.", 1);
   }
 
   std::vector<string> vS;
@@ -450,38 +437,38 @@ void writeRegister(unsigned int argc, const char *argv[])
 
 }
 
- /**
-  * @brief readRawDmaData
-  *
-  * @param[in] nlhs Number of left hand side parameter
-  * @param[inout] phls Pointer to the left hand side parameter
-  *
-  * Parameter: device, register, [offset], [elements], [display_mode]
-  */
+/**
+ * @brief readRawDmaData
+ *
+ * @param[in] nlhs Number of left hand side parameter
+ * @param[inout] phls Pointer to the left hand side parameter
+ *
+ * Parameter: device, register, [offset], [elements], [display_mode]
+ */
 void readDmaRawData(unsigned int argc, const char *argv[])
 {
   const unsigned int pp_cmode = 5;
   const unsigned int maxCmdArgs = 6;
-  
+
   if(argc < 3){
     throw Exception("Not enough input arguments.", 1);
   }
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
-  
+
   if(argList.size() <= pp_cmode || argList[pp_cmode] == "") {
     argList.resize(pp_cmode+1);
     argList[pp_cmode] = "raw";
   }
-  
+
   readRegisterInternal(argList);
 }
 
 void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int maxCmdArgs = 6;
   const unsigned int pp_deviceName = 0, pp_module = 1, pp_register = 2,
-                     pp_seqList = 3, pp_offset = 4, pp_elements = 5;
+      pp_seqList = 3, pp_offset = 4, pp_elements = 5;
   if (argc < 3) {
     throw Exception("Not enough input arguments.", 1);
   }
@@ -491,19 +478,19 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
   dma_Accessor_ptr_t deMuxedData = createOpenedMuxDataAccesor( argList[pp_deviceName],
-                                                               argList[pp_module],
-                                                               argList[pp_register]);
+      argList[pp_module],
+      argList[pp_register]);
   uint sequenceLength = (*deMuxedData)[0].size();
   uint numSequences = (*deMuxedData).getNumberOfDataSequences();
   std::vector<uint> seqList = extractSequenceList(argList[pp_seqList],
-																									deMuxedData,
-																									numSequences);
+      deMuxedData,
+      numSequences);
   uint maxOffset = sequenceLength - 1;
   uint offset = extractOffset(argList[pp_offset], maxOffset);
 
   uint numElements = extractNumElements(argList[pp_elements],
-                                        offset,
-                                        sequenceLength);
+      offset,
+      sequenceLength);
   if (numElements == 0) {
     return;
   }
@@ -513,17 +500,16 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 
 dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
 
-	//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(deviceName);
-	boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
   dma_Accessor_ptr_t deMuxedData = device->getCustomAccessor<dma_Accessor_t>(
-  		regionName, module);
+      regionName, module);
   deMuxedData->read();
   return deMuxedData;
 }
 
 // expects valid offset and num elements not exceeding sequence length
 void printSeqList(const dma_Accessor_ptr_t &deMuxedData, std::vector<uint> const &seqList, uint offset,
-                  uint elements) {
+    uint elements) {
   uint elemIndexToStopAt = (offset + elements);
   for (auto i = offset; i < elemIndexToStopAt; i++) {
     for (auto it = seqList.begin(); it != seqList.end(); it++) {
@@ -552,7 +538,7 @@ std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_pt
       if (tmpSeqNum >= numSequences) {
         std::stringstream ss;
         ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
-           << (numSequences - 1) << "]";
+            << (numSequences - 1) << "]";
         throw Exception(ss.str(), 1);
       }
 
@@ -584,7 +570,7 @@ std::vector<string> createArgList(uint argc, const char *argv[], uint maxArgs) {
 }
 
 uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
-	// TODO: try avoid code duplication with extractNumElements
+  // TODO: try avoid code duplication with extractNumElements
   uint offset;
   if (userEnteredOffset.empty()) {
     offset = 0;
@@ -605,8 +591,8 @@ uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
 }
 
 uint extractNumElements(const string &userEnteredValue,
-                        uint validOffset,
-                        uint maxElements) {
+    uint validOffset,
+    uint maxElements) {
   uint numElements;
   try {
     if (userEnteredValue.empty()) {
@@ -625,11 +611,11 @@ uint extractNumElements(const string &userEnteredValue,
 }
 
 RegisterAccessor_t getRegisterAccessor(const string &deviceName,
-                                       const string &module,
-                                       const string &registerName) {
+    const string &module,
+    const string &registerName) {
   boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
   RegisterAccessor_t reg =
-	device->getRegisterAccessor(registerName, module);
+      device->getRegisterAccessor(registerName, module);
   return reg;
 }
 
@@ -646,10 +632,10 @@ std::string extractDisplayMode(const string &displayMode) {
 }
 
 std::vector<uint> createListWithAllSequences(const dma_Accessor_ptr_t &deMuxedData) {
-	uint numSequences = deMuxedData->getNumberOfDataSequences();
-	std::vector<uint> seqList(numSequences);
-	for(uint index = 0; index < numSequences; ++index){
-			seqList[index] = index;
-	}
-	return seqList;
+  uint numSequences = deMuxedData->getNumberOfDataSequences();
+  std::vector<uint> seqList(numSequences);
+  for(uint index = 0; index < numSequences; ++index){
+    seqList[index] = index;
+  }
+  return seqList;
 }

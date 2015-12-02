@@ -20,7 +20,6 @@
 #include <mtca4u/DMapFilesParser.h>
 #include <mtca4u/Device.h>
 #include <mtca4u/MultiplexedDataAccessor.h>
-#include <mtca4u/BackendFactory.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -82,7 +81,7 @@ vector<Command> vectorOfCommands = {
     Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
     Command("read_seq",&readMultiplexedData,"Get demultiplexed data sequences from a memory region (containing muxed data sequences)", "Board Module DataRegionName [\"sequenceList\"] [Offset] [numElements]")
 };
-static BackendFactory FactoryInstance = BackendFactory::getInstance();
+
 /**
  * @brief Main Entry Function
  *

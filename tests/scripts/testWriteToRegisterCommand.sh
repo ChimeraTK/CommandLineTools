@@ -13,7 +13,10 @@ expected_console_output="./referenceTexts/referenceWriteToRegisterCommand.txt"
 
 # wite to a bad register
 echo "Writing to a bad register NAme" > $actual_console_output 2>&1
-$mtca4u_executable write  DUMMY1 "" SOME_NON_EXISTENT_REGISTER 7$'\t'8$'\t'9$'\t'10 >> $actual_console_output 2>&1
+# the sed command removed the absolute part of the map file path to be able to compare with the referecene
+$mtca4u_executable write  DUMMY1 "" SOME_NON_EXISTENT_REGISTER 7$'\t'8$'\t'9$'\t'10 2>&1 \
+   | sed "{s|: .*\./mtcadummy_withoutModules.map|: \./mtcadummy_withoutModules.map|}"\
+   >> $actual_console_output 2>&1
 
 # Write to register with/without modules
 echo "Writing to register without module" >> $actual_console_output 2>&1

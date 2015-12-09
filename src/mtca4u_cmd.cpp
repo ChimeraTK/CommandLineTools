@@ -137,40 +137,41 @@ int main(int argc, const char* argv[])
 }
 
 /**
- * @brief loadDevices loads a dmap file
+ * Gets an opened device from the factory. 
  *
- * @param[in] dmapFileName File to be loaded or all in the current directory if empty
- *
+ * @param dmapFileName File to be loaded or all in the current directory if empty
+ * @todo FIXME: This has the old behaviour that it scans all dmap files in the current directory, which is deprecated.
+ *              Come up with a new, proper mechanism.
  */
-boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName, const string &dmapFileName = "")
-    {
-  DMapFilesParser filesParser;//(".");
-
-  if (dmapFileName.empty()) // this will have undefined behaviour if factory is using some other dmap file
-  {
-    std::string testFilePath = boost::filesystem::initial_path().string() + (std::string)TEST_DMAP_FILE_PATH;
-    filesParser.parse_file(testFilePath);
+// we intentinally use the copy argument so we can safely modify the argument inside the function
+boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName,
+					      string dmapFileName = ""){
+  if (dmapFileName.empty()){ // find the correct dmap file in the current directory, using the DMapFilesParser
+    // scan all dmap files in the current directory
+    DMapFilesParser filesParser(".");
+    for (DMapFilesParser::iterator it = filesParser.begin();
+	 it != filesParser.end(); ++it){
+      if (deviceName == it->first.deviceName){
+	dmapFileName = it->first.dmapFileName;
+	break;    
+      }
+    }
   }
-  else
-    filesParser.parse_file(dmapFileName);
 
-  DMapFilesParser::iterator it = filesParser.begin();
-
-  for (; it != filesParser.end(); ++it)
-  {
-    if (deviceName == it->first.deviceName)
-      break;    
-  }
-  if(it == filesParser.end()){
+  // Throw here if the alias has not been found in any dmap file.
+  // note: In priciple we could leave the dmapFileName still empty and let the factory throw 
+  // an "unknown alias" exception. But it would complain that it could not open a "" dmap file
+  // which is confusing because the dmap file actually has been scanned, just not by the factory. So
+  // we'd better throw here.
+  if (dmapFileName.empty()){
     throw Exception("Unknown device '" + deviceName + "'.", 2);
   }
-
+  mtca4u::BackendFactory::getInstance().setDMapFilePath( dmapFileName );
 
   boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
-  tempDevice->open(it->first.deviceName);
+  tempDevice->open(deviceName);
   return tempDevice;
-
-    }
+}
 
 /**
  * @brief PrintHelp shows the help text on the console
@@ -212,8 +213,7 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 { 
-  DMapFilesParser filesParser;
-  filesParser.parse_file("dummies.dmap");
+  DMapFilesParser filesParser(".");
   cout << endl << "Available devices: " << endl << endl;
   cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
 
@@ -221,6 +221,9 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 
   for (; it != filesParser.end(); ++it)
   {
+    // tell the factory which dmap file to use before calling Device::open
+    mtca4u::BackendFactory::getInstance().setDMapFilePath( it->first.dmapFileName );
+
     boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
     tempDevice->open(it->first.deviceName);
 

@@ -16,9 +16,9 @@ $ cd build
 $ cmake ..
 
    In case mtca4u is not installed as a system library you probably have
-   to define the path to MtcaMappedDevice
+   to define the path to the deviceaccess library
 
-$ cmake .. -DMtcaMappedDeviceDir=${HOME}/mtca4u/00.19.00/MtcaMappedDevice/00.15.00
+$ cmake .. -Dmtca4u-deviceaccess_Dir=${HOME}/mtca4u/00.FIXME.00/deviceaccess/00.03.01
 
    By default, the installation will happen to the bin directory of the
    source tree. If you want to specify a different directory, specify the

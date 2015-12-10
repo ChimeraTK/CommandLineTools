@@ -1,7 +1,7 @@
 Source: mtca4u-command-line-tools
 Priority: extra
 Maintainer: Martin Killenberg <martin.killenberg@desy.de>
-Build-Depends: debhelper (>= 7), cmake (>= 2.8), dev-mtcamappeddevice (>=00.17)
+Build-Depends: debhelper (>= 7), cmake (>= 2.8), libmtca4u-deviceaccess-dev (>= @mtca4u-deviceaccess_MIN_VERSION@)
 Standards-Version: 3.8.3
 Section: utils
 #Homepage: <insert the upstream URL, if relevant>

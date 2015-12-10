@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 2.8.0)
 project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
-set(${PROJECT_NAME}_MINOR_VERSION 07)
+set(${PROJECT_NAME}_MINOR_VERSION 08)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
  
-FIND_PACKAGE(mtca4u-deviceaccess 00.00 REQUIRED)
+FIND_PACKAGE(mtca4u-deviceaccess 00.03 REQUIRED)
 include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 
 #use -DCMAKE_BUILD_TYPE=Debug then configuring to turn on the coverage tests (and debug symbols)

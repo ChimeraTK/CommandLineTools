@@ -14,5 +14,6 @@ if [ $? -ne 0 ] ; then
     exit -1
 fi 
 
+sed -r "{s|\t/.*/|\t./|}" -i $actual_console_output
 diff $actual_console_output $expected_console_output
 

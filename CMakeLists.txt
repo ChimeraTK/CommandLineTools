@@ -53,6 +53,7 @@ configure_file(cmake/referenceVersionCommand.txt.in
 
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
+set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
 target_link_libraries(mtca4u ${mtca4u-deviceaccess_LIBRARIES} ${Boost_LIBRARIES})    
 
 #change the install prefix to the source directory in case the user has not specified a destination 

@@ -46,7 +46,6 @@ std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
 std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_ptr_t& deMuxedData, uint maxSeq);
 uint extractOffset(string const & userEnteredOffset, uint maxOffset);
 uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements);
-RegisterAccessor_t getRegisterAccessor(const string &deviceName, const string &module, const string &registerName);
 std::string extractDisplayMode(const string &displayMode);
 std::vector<uint> createListWithAllSequences(const dma_Accessor_ptr_t& deMuxedData);
 
@@ -353,9 +352,9 @@ void readRegisterInternal(std::vector<string> argList)
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
 
-  RegisterAccessor_t reg = getRegisterAccessor( argList[pp_device],
-      argList[pp_module],
-      argList[pp_register]);
+  boost::shared_ptr< mtca4u::Device > device = getDevice(argList[pp_device]);
+  RegisterAccessor_t reg =
+      device->getRegisterAccessor(argList[pp_register], argList[pp_module]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
   uint maxElements = regInfo.nElements;
@@ -610,15 +609,6 @@ uint extractNumElements(const string &userEnteredValue,
     throw Exception("Data size exceed register size.", 1);
   }
   return numElements;
-}
-
-RegisterAccessor_t getRegisterAccessor(const string &deviceName,
-    const string &module,
-    const string &registerName) {
-  boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
-  RegisterAccessor_t reg =
-      device->getRegisterAccessor(registerName, module);
-  return reg;
 }
 
 std::string extractDisplayMode(const string &displayMode) {

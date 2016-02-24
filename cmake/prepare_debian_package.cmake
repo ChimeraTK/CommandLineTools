@@ -1,10 +1,12 @@
 #Prepare the debian control files from the template.
 #Basically this is setting the correct version number in most of the files
 
+#The debian version string must not contain ".", so we use "-"
+string(REPLACE "." "-" ${PROJECT_NAME}_DEBVERSION ${${PROJECT_NAME}_SOVERSION})
+
 #Nothing to change, just copy
 file(COPY ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/compat
            ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/mtca4u-command-line-tools.install
-           ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/mtca4u-command-line-tools-empty.install
            ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/rules
      DESTINATION debian_from_template)
 
@@ -17,6 +19,9 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/copyright.in
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/control.in
                debian_from_template/control @ONLY)
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/mtca4u-command-line-toolsDEBVERSION.install.in
+               debian_from_template/mtca4u-command-line-tools${${PROJECT_NAME}_DEBVERSION}.install)
 
 #Copy and configure the shell script which performs the actual 
 #building of the package

@@ -15,19 +15,17 @@ Section: utils
 #Description: Header and cmake files for MTCA4U Mtca4u-Command-Line-Tools.
 # The files you need to compile against MTCA4U Mtca4u-Command-Line-Tools.
 
-Package: mtca4u-command-line-tools-empty
-#The section is intentionally not set. Like this the package
-#cannot be (accidentally) installed on the repository server.
-#Section: 
-Architecture: all
-Depends: mtca4u-command-line-tools (= ${binary:Version})
-Description: Empty package to trick dpkg-buildpackage.
- I use this package so the mtca4u-command-line-tools.install works. This somehow is only
- the case if at least two packages are build. Just ignore it.
+Package: mtca4u-command-line-tools@CommandLineTools_DEBVERSION@
+#The executable with the version number. Like a library you can have multiple versions installed.
+Section: utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: MTCA4U command line executable with version number in the executable and package name.
+ Like this you can have multiple versions installed and declare dependencies in scripts which use it.
 
 Package: mtca4u-command-line-tools
 Section: utils
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, mtca4u-command-line-tools@CommandLineTools_DEBVERSION@
 Description: MTCA4U command line tools to read and write from the command line
  using device aliasses and register names.

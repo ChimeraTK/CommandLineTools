@@ -7,13 +7,14 @@ set(${PROJECT_NAME}_MINOR_VERSION 08)
 set(${PROJECT_NAME}_PATCH_VERSION 01)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
+#Note: We need the so-version because we treat it like a library, with version number in the executable name
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
  
 set(mtca4u-deviceaccess_MIN_VERSION 00.03)
 FIND_PACKAGE(mtca4u-deviceaccess ${mtca4u-deviceaccess_MIN_VERSION} REQUIRED)
 include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 
-#use -DCMAKE_BUILD_TYPE=Debug then configuring to turn on the coverage tests (and debug symbols)
+#use -DCMAKE_BUILD_TYPE=Debug when configuring to turn on the coverage tests (and debug symbols)
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
@@ -52,7 +53,7 @@ configure_file(cmake/referenceVersionCommand.txt.in
 
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
-set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
+set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
 target_link_libraries(mtca4u ${mtca4u-deviceaccess_LIBRARIES} ${Boost_LIBRARIES})    
 
 #change the install prefix to the source directory in case the user has not specified a destination 

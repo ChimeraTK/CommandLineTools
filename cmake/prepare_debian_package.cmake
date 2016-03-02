@@ -35,7 +35,8 @@ add_custom_target(debian_package ${CMAKE_BINARY_DIR}/make_debian_package.sh
 
 #For convenience: Also create an install script for DESY
 set(PACKAGE_NAME "mtca4u-command-line-tools")
-set(PACKAGE_FILES_WILDCARDS "${PACKAGE_NAME}_*.deb ${PACKAGE_NAME}_*.changes")
+set(VERSIONED_PACKAGE_NAME "mtca4u-command-line-tools${${PROJECT_NAME}_DEBVERSION}")
+set(PACKAGE_FILES_WILDCARDS "${PACKAGE_NAME}_*.deb  ${VERSIONED_PACKAGE_NAME}_*.deb ${PACKAGE_NAME}_*.changes")
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/install_debian_package_at_DESY.sh.in
                install_debian_package_at_DESY.sh @ONLY)

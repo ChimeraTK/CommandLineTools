@@ -270,7 +270,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
   unsigned int index = 0;
-  for (std::vector<RegisterInfo_t>::const_iterator cit = map->begin(); cit != map->end(); ++cit, ++index) {
+  for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
     // print out module name if present
     if(cit->module.empty()){
       cout << cit->name.c_str() << "\t";

@@ -1,5 +1,5 @@
 Writing to a bad register NAme
-Cannot find register SOME_NON_EXISTENT_REGISTER in map file: ./mtcadummy_withoutModules.map
+Register '/SOME_NON_EXISTENT_REGISTER' was not found in the catalogue.
 Writing to register without module
 7.80000000e+01
 2.80000000e+01

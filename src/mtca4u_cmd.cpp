@@ -19,7 +19,7 @@
 
 #include <mtca4u/DMapFilesParser.h>
 #include <mtca4u/Device.h>
-#include <mtca4u/MultiplexedDataAccessor.h>
+#include <mtca4u/TwoDRegisterAccessor.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -31,8 +31,8 @@ using namespace std;
 
 
 // typedefs and Functions declarations
-typedef MultiplexedDataAccessor<double> dma_Accessor_t;
-typedef boost::shared_ptr<dma_Accessor_t> dma_Accessor_ptr_t;
+typedef TwoDRegisterAccessor<double> dma_Accessor_t;
+typedef boost::shared_ptr< TwoDRegisterAccessorImpl<double> > dma_Accessor_ptr_t;
 
 //typedef boost::shared_ptr<Device<DummyBackend>::RegisterAccessor> RegisterAccessor_t;
 typedef boost::shared_ptr<Device::RegisterAccessor> RegisterAccessor_t;
@@ -502,10 +502,9 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
-  dma_Accessor_ptr_t deMuxedData = device->getCustomAccessor<dma_Accessor_t>(
-      regionName, module);
-  deMuxedData->read();
-  return deMuxedData;
+  auto deMuxedData = device->getTwoDRegisterAccessor<double>(module, regionName);
+  deMuxedData.read();
+  return deMuxedData.getSharedPtr();
 }
 
 // expects valid offset and num elements not exceeding sequence length

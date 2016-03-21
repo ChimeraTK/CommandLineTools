@@ -40,14 +40,14 @@ typedef mtca4u::RegisterInfoMap::RegisterInfo RegisterInfo_t;
 
 //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > getDevice(const string& deviceName, const string &dmapFileName);
 boost::shared_ptr< mtca4u::Device> getDevice(const string& deviceName, const string &dmapFileName);
-dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName);
-void printSeqList (const dma_Accessor_ptr_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
+dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName);
+void printSeqList (const dma_Accessor_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
-std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_ptr_t& deMuxedData, uint maxSeq);
+std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_t& deMuxedData, uint maxSeq);
 uint extractOffset(string const & userEnteredOffset, uint maxOffset);
 uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements);
 std::string extractDisplayMode(const string &displayMode);
-std::vector<uint> createListWithAllSequences(const dma_Accessor_ptr_t& deMuxedData);
+std::vector<uint> createListWithAllSequences(const dma_Accessor_t& deMuxedData);
 
 typedef void (*CmdFnc)(unsigned int, const char **);
 
@@ -478,11 +478,11 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
   std::vector<string> argList = createArgList(argc, argv, maxCmdArgs);
 
-  dma_Accessor_ptr_t deMuxedData = createOpenedMuxDataAccesor( argList[pp_deviceName],
+  dma_Accessor_t deMuxedData = createOpenedMuxDataAccesor( argList[pp_deviceName],
       argList[pp_module],
       argList[pp_register]);
-  uint sequenceLength = (*deMuxedData)[0].size();
-  uint numSequences = (*deMuxedData).getNumberOfDataSequences();
+  uint sequenceLength = deMuxedData.getNumberOfSamples();
+  uint numSequences = deMuxedData.getNumberOfDataSequences();
   std::vector<uint> seqList = extractSequenceList(argList[pp_seqList],
       deMuxedData,
       numSequences);
@@ -499,28 +499,28 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   printSeqList(deMuxedData, seqList, offset, numElements);
 }
 
-dma_Accessor_ptr_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
+dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
   auto deMuxedData = device->getTwoDRegisterAccessor<double>(module, regionName);
   deMuxedData.read();
-  return deMuxedData.getSharedPtr();
+  return deMuxedData;
 }
 
 // expects valid offset and num elements not exceeding sequence length
-void printSeqList(const dma_Accessor_ptr_t &deMuxedData, std::vector<uint> const &seqList, uint offset,
+void printSeqList(const dma_Accessor_t &deMuxedData, std::vector<uint> const &seqList, uint offset,
     uint elements) {
   uint elemIndexToStopAt = (offset + elements);
   for (auto i = offset; i < elemIndexToStopAt; i++) {
     for (auto it = seqList.begin(); it != seqList.end(); it++) {
-      std::cout << (*deMuxedData)[*it][i] << "\t";
+      std::cout << deMuxedData[*it][i] << "\t";
     }
     std::cout << "\n";
   }
   std::cout << std::flush;
 }
 
-std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_ptr_t& deMuxedData, uint numSequences) {
+std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_t& deMuxedData, uint numSequences) {
   if (list.empty()) {
     return createListWithAllSequences(deMuxedData);
   }
@@ -622,8 +622,8 @@ std::string extractDisplayMode(const string &displayMode) {
   return displayMode;
 }
 
-std::vector<uint> createListWithAllSequences(const dma_Accessor_ptr_t &deMuxedData) {
-  uint numSequences = deMuxedData->getNumberOfDataSequences();
+std::vector<uint> createListWithAllSequences(const dma_Accessor_t &deMuxedData) {
+  uint numSequences = deMuxedData.getNumberOfDataSequences();
   std::vector<uint> seqList(numSequences);
   for(uint index = 0; index < numSequences; ++index){
     seqList[index] = index;

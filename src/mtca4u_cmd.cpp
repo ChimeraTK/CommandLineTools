@@ -32,7 +32,6 @@ using namespace std;
 
 // typedefs and Functions declarations
 typedef TwoDRegisterAccessor<double> dma_Accessor_t;
-typedef boost::shared_ptr< TwoDRegisterAccessorImpl<double> > dma_Accessor_ptr_t;
 
 //typedef boost::shared_ptr<Device<DummyBackend>::RegisterAccessor> RegisterAccessor_t;
 typedef boost::shared_ptr<Device::RegisterAccessor> RegisterAccessor_t;

@@ -7,9 +7,9 @@ Available commands are:
   help							Prints the help text
   version						Prints the tools version
   info							Prints all devices
-  device_info	Board Module				Prints the register of devices
-  register_info	Board Module Register 			Prints the register infos
-  register_size	Board Module Register 			Prints the register infos
+  device_info	Board				Prints the register list of a device
+  register_info	Board Module Register 			Prints the info of a register
+  register_size	Board Module Register 			Prints the size of a register
   read		Board Module Register [offset] [elements] [raw | hex]	Read data from Board
   write		Board Module Register Value [offset]		Write data to Board
   read_dma_raw	Board Module Register [offset] [elements] [raw | hex]		Read raw 32 bit values from DMA registers without Fixed point conversion

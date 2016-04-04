@@ -71,9 +71,9 @@ vector<Command> vectorOfCommands = {
     Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
     Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
     Command("info",&getInfo,"Prints all devices","\t\t\t\t\t"),
-    Command("device_info",&getDeviceInfo,"Prints the register of devices","Board Module\t\t\t"),
-    Command("register_info",&getRegisterInfo,"Prints the register infos","Board Module Register \t\t"),
-    Command("register_size",&getRegisterSize,"Prints the register infos","Board Module Register \t\t"),
+    Command("device_info",&getDeviceInfo,"Prints the register list of a device","Board\t\t\t"),
+    Command("register_info",&getRegisterInfo,"Prints the info of a register","Board Module Register \t\t"),
+    Command("register_size",&getRegisterSize,"Prints the size of a register","Board Module Register \t\t"),
     Command("read",&readRegister,"Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"),
     Command("write",&writeRegister,"Write data to Board", "\tBoard Module Register Value [offset]\t"),
     Command("read_dma_raw",&readDmaRawData,"Read raw 32 bit values from DMA registers without Fixed point conversion", "Board Module Register [offset] [elements] [raw | hex]\t"),
@@ -329,7 +329,8 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
 }
 
 /**
- * @brief getRegisterInfo shows the register information
+ * getRegisterInfo prints the size of a register (number of elements).
+ * \todo FIXME: For 2D- registers it is the size of one channel.
  *
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter

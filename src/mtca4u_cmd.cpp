@@ -269,8 +269,10 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
   unsigned int index = 0;
+  unsigned int n2DChannels = 0;
   for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
     if( cit->getNumberOfDimensions() == 2){
+      ++n2DChannels;
       continue;
     }
     // print out module name if present
@@ -283,6 +285,22 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
     cout << cit->width << "\t\t" << cit->nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
 
+  if(n2DChannels > 0){
+    cout <<"\n2D registers\n"
+	 <<"Name\tnChannels\tnElementsPerChannel\n";
+    for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
+      if( cit->getNumberOfDimensions() != 2){
+	continue;
+      }
+      if(cit->module.empty()){
+	cout << cit->name.c_str() << "\t";
+      } else {
+	cout << cit->module << "." << cit->name.c_str() << "\t";
+      }
+      cout << cit->getNumberOfChannels()<< "\t\t"<< cit->nElements << endl;
+    }
+  }
+  
 }
 
 /**

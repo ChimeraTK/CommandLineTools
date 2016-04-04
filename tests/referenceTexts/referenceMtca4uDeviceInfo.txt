@@ -32,6 +32,10 @@ SEQUENCE_DMA_1	1		1		32		0
 SEQUENCE_DMA_2	1		1		32		0			 
 SEQUENCE_DMA_3	1		1		32		0			 
 SEQUENCE_DMA_4	1		1		32		0			 
+
+2D registers
+Name	nChannels	nElementsPerChannel
+DMA	5		4
 Device Info for card with modules
 Name		Elements	Signed		Bits		Fractional_Bits		Description
 BOARD.WORD_FIRMWARE	1		0		32		0			 

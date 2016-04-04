@@ -270,6 +270,9 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 
   unsigned int index = 0;
   for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
+    if( cit->getNumberOfDimensions() == 2){
+      continue;
+    }
     // print out module name if present
     if(cit->module.empty()){
       cout << cit->name.c_str() << "\t";

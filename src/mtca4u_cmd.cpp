@@ -247,6 +247,17 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 }
 
 
+/** Print the module and register name.
+ *  Just a helper function to avoid duplicate code and if/then/elses
+ */
+void printModuleRegisterName(mtca4u::RegisterInfoMap::RegisterInfo const & registerInfo){
+    if(registerInfo.module.empty()){
+      cout << registerInfo.name.c_str() << "\t";
+    } else {
+      cout << registerInfo.module << "." << registerInfo.name.c_str() << "\t";
+    }
+}
+
 /**
  * @brief getDeviceInfo shows the device information
  *
@@ -275,12 +286,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
       ++n2DChannels;
       continue;
     }
-    // print out module name if present
-    if(cit->module.empty()){
-      cout << cit->name.c_str() << "\t";
-    } else {
-      cout << cit->module << "." << cit->name.c_str() << "\t";
-    }
+    printModuleRegisterName(*cit);
     cout << cit->nElements << "\t\t" << cit->signedFlag << "\t\t";
     cout << cit->width << "\t\t" << cit->nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
   }
@@ -292,11 +298,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
       if( cit->getNumberOfDimensions() != 2){
 	continue;
       }
-      if(cit->module.empty()){
-	cout << cit->name.c_str() << "\t";
-      } else {
-	cout << cit->module << "." << cit->name.c_str() << "\t";
-      }
+      printModuleRegisterName(*cit);
       cout << cit->getNumberOfChannels()<< "\t\t"<< cit->nElements << endl;
     }
   }

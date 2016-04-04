@@ -19,11 +19,6 @@ read_dma_raw DMA region - AREA_DMA_VIA_DMA
 289
 324
 361
-400
-441
-484
-529
-576
 read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA
 0
 1
@@ -45,12 +40,7 @@ read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA
 289
 324
 361
-400
-441
-484
-529
-576
-read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 24
+read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 19
 Reqested dma size is too small
 read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 0
@@ -73,12 +63,7 @@ read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 289
 324
 361
-400
-441
-484
-529
-576
-invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 25
+invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20
 Offset exceed register size.
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26
 Offset exceed register size.
@@ -121,11 +106,6 @@ e1
 121
 144
 169
-190
-1b9
-1e4
-211
-240
 uint representation for Raw Value
 0
 1
@@ -147,11 +127,6 @@ uint representation for Raw Value
 289
 324
 361
-400
-441
-484
-529
-576
 uint representation for Raw Value when num elem is 0 -> This was causing aseg fault before
 Command called with not enough arguments
 Not enough input arguments.

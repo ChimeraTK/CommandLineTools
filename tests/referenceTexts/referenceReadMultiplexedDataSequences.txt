@@ -3,19 +3,16 @@ reading the Muxed DMA region -> print all sequences
 25	36	49	64	81	
 100	121	144	169	196	
 225	256	289	324	361	
-400	441	484	529	576	
 reading the Muxed DMA region -> print selected sequence
 1	
 36	
 121	
 256	
-441	
 reading invalid sequence
 seqNum invalid. Valid seqNumbers are in the range [0, 4]
 reading from offset 2 of seq# 1
 121	
 256	
-441	
 reading from invalid offset  in seq# 1
 Offset exceed register size.
 reading specific number of elemnts from seq# 1 offset 1
@@ -33,7 +30,6 @@ Using sequence list to print selected sequences (3, 2, 1) - valid case
 64	49	36	
 169	144	121	
 324	289	256	
-529	484	441	
 Using sequence list to print selected sequences (3, 2, 1) - offset = 2, numelements = 1
 169	144	121	
 Using sequence list bad seq num
@@ -45,4 +41,3 @@ Using sequence list empty list
 25	36	49	64	81	
 100	121	144	169	196	
 225	256	289	324	361	
-400	441	484	529	576	

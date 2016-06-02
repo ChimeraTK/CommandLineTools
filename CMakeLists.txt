@@ -10,7 +10,7 @@ set(${PROJECT_NAME}_VERSION
 #Note: We need the so-version because we treat it like a library, with version number in the executable name
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
  
-set(mtca4u-deviceaccess_MIN_VERSION 00.09)
+set(mtca4u-deviceaccess_MIN_VERSION 00.12)
 FIND_PACKAGE(mtca4u-deviceaccess ${mtca4u-deviceaccess_MIN_VERSION} REQUIRED)
 include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 
@@ -18,22 +18,9 @@ include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${mtca4u-deviceaccess_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-#enable C++11 support. Unfortunately the flag is c++0x in gcc4.6, which we still have to support which makes
-#it a bit lengthy
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
 
 FIND_PACKAGE(Boost COMPONENTS system filesystem)
 #The boost header-only development files are required
@@ -112,7 +99,7 @@ MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
         "${source_directory}/*[!~].map" 
         "${source_directory}/*[!~].txt") 
     foreach( file ${list_of_files_to_copy} )
-        configure_file( ${file} ${target_directory} copyonly )
+        FILE( COPY ${file} DESTINATION ${target_directory} )
     endforeach( file )
 ENDMACRO( COPY_SOURCE_TO_TARGET )
 

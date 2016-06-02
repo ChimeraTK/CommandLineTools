@@ -23,7 +23,7 @@ fi
 # check the case where the command is entered incorrectly
 bash -c '$0 register_size DUMMY2 AREA_DMA_VIA_DMA >> $1 2>&1' $mtca4u_executable $actual_console_output
 
-if [ $? -e 0 ]; then # will not be equal to 0 if abv bash command fails
+if [ $? -eq 0 ]; then # will not be equal to 0 if abv bash command fails
 	exit -1 # The test fails if the bash command does not return in error
 fi
 

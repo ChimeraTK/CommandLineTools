@@ -16,9 +16,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <cstdlib>
+#include <limits>
 
 #include <mtca4u/DMapFilesParser.h>
 #include <mtca4u/Device.h>
+#include <mtca4u/OneDRegisterAccessor.h>
 #include <mtca4u/TwoDRegisterAccessor.h>
 
 #include <boost/algorithm/string.hpp>
@@ -43,8 +45,8 @@ dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string
 void printSeqList (const dma_Accessor_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
 std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_t& deMuxedData, uint maxSeq);
-uint extractOffset(string const & userEnteredOffset, uint maxOffset);
-uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements);
+uint extractOffset(string const & userEnteredOffset, uint maxOffset = std::numeric_limits<uint>::max() );
+uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements = std::numeric_limits<uint>::max() );
 std::string extractDisplayMode(const string &displayMode);
 std::vector<uint> createListWithAllSequences(const dma_Accessor_t& deMuxedData);
 
@@ -376,42 +378,46 @@ void readRegisterInternal(std::vector<string> argList)
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(argList[pp_device]);
-  RegisterAccessor_t reg =
-      device->getRegisterAccessor(argList[pp_register], argList[pp_module]);
-  RegisterInfo_t regInfo = reg->getRegisterInfo();
 
-  uint maxElements = regInfo.nElements;
+  auto registerPath =  RegisterPath(argList[pp_module])/argList[pp_register];
+
+  uint maxElements = 1;
+  try{
+    auto registerInfo = device->getRegisterCatalogue().getRegister(registerPath);
+    maxElements = registerInfo->getNumberOfElements();
+  }catch (mtca4u::Exception & ){
+    // just ignore if you don't have register information, use one element
+  }
+
   uint maxOffset = maxElements - 1;
 
   uint offset = extractOffset(argList[pp_offset], maxOffset);
-  uint numElements =
-      extractNumElements(argList[pp_elements], offset, maxElements);
-  if (numElements == 0) {
-    return;
-  }
-
+  uint numElements = extractNumElements(argList[pp_elements], offset, maxElements);
   string cmode = extractDisplayMode(argList[pp_cmode]);
+
   // Read as raw values
   if ((cmode == "raw") || (cmode == "hex")) {
-    vector<int32_t> values(numElements);
-    reg->readRaw(&(values[0]), numElements * 4, offset * 4);
+    auto accessor = device->getOneDRegisterAccessor<int32_t>(registerPath, numElements, offset, {AccessMode::raw});
+    accessor.read();
     if (cmode == "hex")
       cout << std::hex;
     else
       cout << std::fixed;
-    for (unsigned int d = 0; (d < regInfo.nElements) && (d < values.size()); d++) {
-      cout << static_cast<uint32_t>(values[d]) << "\n";
+    for ( auto value : accessor ){
+      cout << static_cast<uint32_t>(value) << "\n";
     }
-    std::cout << std::flush;
+
   } else { // Read with automatic conversion to double
-    vector<double> values(numElements);
-    reg->read(&(values[0]), numElements, offset);
+
+    auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
+    accessor.read();
     cout << std::scientific << std::setprecision(8);
-    for (unsigned int d = 0; (d < regInfo.nElements) && (d < values.size()); d++){
-      cout << values[d] << "\n";
+    for (auto value : accessor){
+      cout << value << "\n";
     }
-    std::cout << std::flush;
   }
+  std::cout << std::flush;
+
 }
 
 /**

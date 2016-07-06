@@ -107,3 +107,5 @@ Command called with not enough arguments
 Not enough input arguments.
 Command called with bad device name
 Unknown device 'NON_EXISTENT_DEVICE'.
+Command called with SDM URI and numerical address
+444d4d59

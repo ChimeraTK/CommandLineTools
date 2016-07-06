@@ -146,26 +146,34 @@ int main(int argc, const char* argv[])
 // we intentinally use the copy argument so we can safely modify the argument inside the function
 boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName,
 					      string dmapFileName = ""){
-  if (dmapFileName.empty()){ // find the correct dmap file in the current directory, using the DMapFilesParser
-    // scan all dmap files in the current directory
-    DMapFilesParser filesParser(".");
-    for (DMapFilesParser::iterator it = filesParser.begin();
-	 it != filesParser.end(); ++it){
-      if (deviceName == it->first.deviceName){
-	dmapFileName = it->first.dmapFileName;
-	break;    
+
+  if (deviceName.substr(0,6) != "sdm://"){
+    /* If the device name is not an sdm, the dmap file path has to be set. Try to determine it if not given.
+       For SDM URIs the dmap file name can be empty. */
+    
+    if (dmapFileName.empty()){ // find the correct dmap file in the current directory, using the DMapFilesParser
+      // scan all dmap files in the current directory
+      DMapFilesParser filesParser(".");
+      for (DMapFilesParser::iterator it = filesParser.begin();
+	   it != filesParser.end(); ++it){
+	if (deviceName == it->first.deviceName){
+	  dmapFileName = it->first.dmapFileName;
+	  break;    
+	}
       }
     }
-  }
 
-  // Throw here if the alias has not been found in any dmap file.
-  // note: In priciple we could leave the dmapFileName still empty and let the factory throw 
-  // an "unknown alias" exception. But it would complain that it could not open a "" dmap file
-  // which is confusing because the dmap file actually has been scanned, just not by the factory. So
-  // we'd better throw here.
-  if (dmapFileName.empty()){
-    throw Exception("Unknown device '" + deviceName + "'.", 2);
+    // Throw here if the alias has not been found in any dmap file.
+    // note: In priciple we could leave the dmapFileName still empty and let the factory throw 
+    // an "unknown alias" exception. But it would complain that it could not open a "" dmap file
+    // which is confusing because the dmap file actually has been scanned, just not by the factory. So
+    // we'd better throw here.
+    if (dmapFileName.empty()){
+      throw Exception("Unknown device '" + deviceName + "'.", 2);
+    }
   }
+  
+  // Set the dmap file in any case. Some devices might require it, even if the device name is given as a URI
   mtca4u::BackendFactory::getInstance().setDMapFilePath( dmapFileName );
 
   boost::shared_ptr< mtca4u::Device > tempDevice (new Device());

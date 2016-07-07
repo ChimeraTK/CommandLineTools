@@ -109,3 +109,16 @@ Command called with bad device name
 Unknown device 'NON_EXISTENT_DEVICE'.
 Command called with SDM URI and numerical address
 444d4d59
+1.14591676e+09
+0.00000000e+00
+1.00000000e+00
+4.00000000e+00
+9.00000000e+00
+0
+1
+4
+9
+4.00000000e+00
+9.00000000e+00
+4
+9

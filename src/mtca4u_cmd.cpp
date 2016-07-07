@@ -389,12 +389,14 @@ void readRegisterInternal(std::vector<string> argList)
 
   auto registerPath =  RegisterPath(argList[pp_module])/argList[pp_register];
 
-  uint maxElements = 1;
-  try{
-    auto registerInfo = device->getRegisterCatalogue().getRegister(registerPath);
-    maxElements = registerInfo->getNumberOfElements();
+  uint maxElements = std::numeric_limits<uint>::max();
+   try{
+     // In case we have register information, we must not request an accessor which is longer than the 
+     // actual register size.
+     auto registerInfo = device->getRegisterCatalogue().getRegister(registerPath);
+     maxElements = registerInfo->getNumberOfElements();
   }catch (mtca4u::Exception & ){
-    // just ignore if you don't have register information, use one element
+    // just ignore if you don't have register information, don't limit and take what was specified by the user
   }
 
   uint maxOffset = maxElements - 1;

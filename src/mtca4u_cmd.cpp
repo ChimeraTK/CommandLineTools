@@ -391,21 +391,7 @@ void readRegisterInternal(std::vector<string> argList)
 
   auto registerPath =  RegisterPath(argList[pp_module])/argList[pp_register];
 
-  uint maxElements = std::numeric_limits<uint>::max();
-   try{
-     // In case we have register information, we must not request an accessor which is longer than the 
-     // actual register size.
-     auto registerInfo = device->getRegisterCatalogue().getRegister(registerPath);
-     maxElements = registerInfo->getNumberOfElements();
-  }catch (mtca4u::Exception & ){
-    // just ignore if you don't have register information, don't limit and take what was specified by the user
-  }
-
-  uint maxOffset = maxElements - 1;
-
-  //FIXME: replace extractOffset with stringToUIntWithZeroDefault to get rid of the maxElements and maxOffset bloat
-  //Needed: Creation/constructor of the accessor has to check the offset and throw a proper exception.
-  uint offset = extractOffset(argList[pp_offset], maxOffset);
+  uint offset = stringToUIntWithZeroDefault(argList[pp_offset]);
   uint numElements = stringToUIntWithZeroDefault(argList[pp_elements]);
   string cmode = extractDisplayMode(argList[pp_cmode]);
 
@@ -450,6 +436,8 @@ void writeRegister(unsigned int argc, const char *argv[])
   }
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
+  auto registerPath =  RegisterPath(argv[pp_module])/argv[pp_register];
+  
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[pp_register],argv[pp_module]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 

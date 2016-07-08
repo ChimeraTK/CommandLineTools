@@ -64,11 +64,11 @@ read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 324
 361
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20
-Offset exceed register size.
+Requested offset exceeds the size of the register!
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26
-Offset exceed register size.
+Requested offset exceeds the size of the register!
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: -5
-Offset exceed register size.
+Requested offset exceeds the size of the register!
 read_dma_raw first 10 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
 0
 1
@@ -173,6 +173,6 @@ Not enough input arguments.
 bad num elements
 Could not convert numElements or offset to a valid number.
 bad offset Value
-Could not convert Offset
+Could not convert numElements or offset to a valid number.
 bad display mode
 Invalid display mode; Use raw | hex

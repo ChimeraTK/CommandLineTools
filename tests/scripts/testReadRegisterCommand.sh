@@ -47,6 +47,8 @@ bash -c '$0 read DUMMY2 ADC WORD_CLK_MUX >> $1  2>&1' $mtca4u_executable $actual
 # read with offset - valid/invalid
 echo "read WORD_CLK_MUX from offset 2" >> $actual_console_output
 bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+# invalid: offset, but full register length 
+bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 2 4 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 echo "read WORD_CLK_MUX from offset 0" >> $actual_console_output
 bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
@@ -89,12 +91,9 @@ bash -c '$0 read NON_EXISTENT_DEVICE ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_exe
 # Not using dmap and map file, but sdm uri and numerical address
 echo "Command called with SDM URI and numerical address" >> $actual_console_output
 bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/0/60" 0 0 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
-# FIXME Urgly: We have to specify 0 as number of elements because the implementation is buggy
-bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/0/60" 0 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/0/60" >> $1  2>&1' $mtca4u_executable $actual_console_output 
 # Check reading more than one word, in raw and normal mode 
-# FIXME Urgly: We have to specify 0 as number of elements because the implementation is buggy
-bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/0*16" 0 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-# FIXME Urgly: We have to specify 0 as number of elements because the implementation is buggy
+bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/0*16" >> $1  2>&1' $mtca4u_executable $actual_console_output 
 bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/0*16" 0 0 raw >> $1 2>&1' $mtca4u_executable $actual_console_output 
 # Test reading only two words with offet
 bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/4*16" 1 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 

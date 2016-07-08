@@ -49,6 +49,8 @@ uint extractOffset(string const & userEnteredOffset, uint maxOffset = std::numer
 uint extractNumElements(string const & userEnteredValue, uint offset, uint maxElements = std::numeric_limits<uint>::max() );
 std::string extractDisplayMode(const string &displayMode);
 std::vector<uint> createListWithAllSequences(const dma_Accessor_t& deMuxedData);
+// converts a string to uint, catches and replaces the conversion exception, and returns 0 if the string is empty
+uint stringToUIntWithZeroDefault(const string &userEnteredValue);
 
 typedef void (*CmdFnc)(unsigned int, const char **);
 
@@ -401,8 +403,10 @@ void readRegisterInternal(std::vector<string> argList)
 
   uint maxOffset = maxElements - 1;
 
+  //FIXME: replace extractOffset with stringToUIntWithZeroDefault to get rid of the maxElements and maxOffset bloat
+  //Needed: Creation/constructor of the accessor has to check the offset and throw a proper exception.
   uint offset = extractOffset(argList[pp_offset], maxOffset);
-  uint numElements = extractNumElements(argList[pp_elements], offset, maxElements);
+  uint numElements = stringToUIntWithZeroDefault(argList[pp_elements]);
   string cmode = extractDisplayMode(argList[pp_cmode]);
 
   // Read as raw values
@@ -418,7 +422,6 @@ void readRegisterInternal(std::vector<string> argList)
     }
 
   } else { // Read with automatic conversion to double
-
     auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
     accessor.read();
     cout << std::scientific << std::setprecision(8);
@@ -646,6 +649,25 @@ uint extractNumElements(const string &userEnteredValue,
   if (numElements > (maxElements - validOffset)) {
     throw Exception("Data size exceed register size.", 1);
   }
+  return numElements;
+}
+
+uint stringToUIntWithZeroDefault(const string &userEnteredValue){
+  // return 0 if the string is empty (0 means the whole register or no offset)
+  if (userEnteredValue.empty()){
+    return 0;
+  }
+
+  // Just extract the number and convert a possible conversion exception to 
+  // an mtca4u::Exception with proper error message
+  uint numElements;
+  try {
+    numElements = std::stoul(userEnteredValue);
+  }
+  catch (invalid_argument &) {
+    throw Exception("Could not convert numElements or offset to a valid number.", 1);
+  }
+
   return numElements;
 }
 

@@ -438,9 +438,6 @@ void writeRegister(unsigned int argc, const char *argv[])
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
   auto registerPath =  RegisterPath(argv[pp_module])/argv[pp_register];
   
-  RegisterAccessor_t reg = device->getRegisterAccessor(argv[pp_register],argv[pp_module]);
-  RegisterInfo_t regInfo = reg->getRegisterInfo();
-
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
 
   std::vector<string> vS;

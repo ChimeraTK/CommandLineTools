@@ -11,9 +11,9 @@ Writing to register with module
 1.10000000e+01
 1.44000000e+02
 Writing 5 elements to WORD_CLK_MUX (which is 4 elements long)
-Requested number of words exceed the size of the register!
+Requested number of words exceeds the size of the register!
 Writing 6 elements to WORD_CLK_MUX (which is 4 elements long)
-Requested number of words exceed the size of the register!
+Requested number of words exceeds the size of the register!
 Writing 2 elements to WORD_CLK_MUX from offset 2
 7.80000000e+01
 2.80000000e+01

@@ -102,9 +102,9 @@ read_dma_raw 0 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
 324
 361
 read_dma_raw first 26 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case
-Requested number of words exceed the size of the register!
+Requested number of words exceeds the size of the register!
 read_dma_raw first -5 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case
-Requested number of words exceed the size of the register!
+Requested number of words exceeds the size of the register!
 hex representation for Raw Value
 0
 1

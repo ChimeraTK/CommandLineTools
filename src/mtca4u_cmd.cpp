@@ -441,21 +441,17 @@ void writeRegister(unsigned int argc, const char *argv[])
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[pp_register],argv[pp_module]);
   RegisterInfo_t regInfo = reg->getRegisterInfo();
 
-  // TODO: Consider extracting this snippet to a helper method as we use the
-  // same check in read command as well
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
-  if (regInfo.nElements <= offset){
-    throw Exception("Offset exceed register size.", 1);
-  }
 
   std::vector<string> vS;
   boost::split(vS, argv[pp_value], boost::is_any_of("\t "));
 
+  size_t numElements = vS.size();
 
-
-  vector<double> vD(vS.size());
+  auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
+ 
   try {
-    std::transform(vS.begin(), vS.end(), vD.begin(), [](const string& s){ return stod(s); });
+    std::transform(vS.begin(), vS.end(), accessor.begin(), [](const string& s){ return stod(s); });
   }
   catch(invalid_argument &ex) {
     throw Exception("Could not convert parameter to double.",3);// + d + " to double: " + ex.what(), 3);
@@ -464,7 +460,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw Exception("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
   }
 
-  reg->write(&(vD[0]), vD.size(), offset);
+  accessor.write();
 
 }
 

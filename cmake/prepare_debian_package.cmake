@@ -15,6 +15,7 @@ set(PACKAGE_MESSAGE "Debian package for MTCA4U command line tools ${${PROJECT_NA
 
 #Nothing to change, just copy
 file(COPY ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/compat
+           ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/copyright
            ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/${PACKAGE_BASE_NAME}.install
            ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/rules
      DESTINATION debian_from_template)
@@ -23,9 +24,6 @@ file(COPY ${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/source/format
      DESTINATION debian_from_template/source)
 
 #Set the version number
-configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/copyright.in
-               debian_from_template/copyright @ONLY)
-
 configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/control.in
                debian_from_template/control @ONLY)
 

@@ -30,7 +30,7 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/control.in
                debian_from_template/control @ONLY)
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/debian_package_templates/${PACKAGE_BASE_NAME}DEBVERSION.install.in
-               debian_from_template/${PACKAGE_BASE_NAME}${${PACKAGE_BASE_NAME}_DEBVERSION}.install)
+               debian_from_template/${PACKAGE_BASE_NAME}${${PROJECT_NAME}_DEBVERSION}.install)
 
 #Copy and configure the shell script which performs the actual 
 #building of the package

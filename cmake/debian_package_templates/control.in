@@ -26,6 +26,6 @@ Description: MTCA4U command line executable with version number in the executabl
 Package: mtca4u-command-line-tools
 Section: utils
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, mtca4u-command-line-tools@CommandLineTools_DEBVERSION@
+Depends: ${misc:Depends}, mtca4u-command-line-tools@CommandLineTools_DEBVERSION@
 Description: MTCA4U command line tools to read and write from the command line
  using device aliasses and register names.

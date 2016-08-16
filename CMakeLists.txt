@@ -4,7 +4,7 @@ project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
 set(${PROJECT_NAME}_MINOR_VERSION 11)
-set(${PROJECT_NAME}_PATCH_VERSION 01)
+set(${PROJECT_NAME}_PATCH_VERSION 02)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 #Note: We need the so-version because we treat it like a library, with version number in the executable name
@@ -17,11 +17,12 @@ include_directories(${mtca4u-deviceaccess_INCLUDE_DIRS})
 #use -DCMAKE_BUILD_TYPE=Debug when configuring to turn on the coverage tests (and debug symbols)
 
 # Set the build type to Release if none is specified
-if(NOT CMAKE_BUILD_TYPE)
+# Force it into Release if "None" is specified (needed to overrule dkpg_buildpackage)
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "None")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING
       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+endif(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "None")
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives

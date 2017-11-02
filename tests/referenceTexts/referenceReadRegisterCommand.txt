@@ -63,18 +63,18 @@ read with no default arguments in board with modules
 read WORD_CLK_MUX from offset 2
 9.00000000e+00
 1.00000000e+01
-Requested number of words exceeds the size of the register!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 read WORD_CLK_MUX from offset 0
 7.00000000e+00
 8.00000000e+00
 9.00000000e+00
 1.00000000e+01
 invalid WORD_CLK_MUX offset: 4
-Requested offset exceeds the size of the register!
+Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
 invalid WORD_CLK_MUX offset: 5
-Requested offset exceeds the size of the register!
+Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
 invalid WORD_CLK_MUX offset: -5 this is treated as uint and hence data bigger than reg size
-Requested offset exceeds the size of the register!
+Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
 read first 4 Elem from WORD_CLK_MUX
 7.00000000e+00
 8.00000000e+00
@@ -86,9 +86,9 @@ read 0 Elem from WORD_CLK_MUX
 9.00000000e+00
 1.00000000e+01
 read first 5 Elem from WORD_CLK_MUX <- invalid case
-Requested number of words exceeds the size of the register!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 read first -5 Elem from WORD_CLK_MUX <- invalid case
-Requested number of words exceeds the size of the register!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 hex representation for Raw Value
 b
 c

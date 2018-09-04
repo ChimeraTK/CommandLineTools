@@ -18,17 +18,17 @@
 #include <cstdlib>
 #include <limits>
 
-#include <mtca4u/DMapFilesParser.h>
-#include <mtca4u/Device.h>
-#include <mtca4u/OneDRegisterAccessor.h>
-#include <mtca4u/TwoDRegisterAccessor.h>
+#include <ChimeraTK/DMapFilesParser.h>
+#include <ChimeraTK/Device.h>
+#include <ChimeraTK/OneDRegisterAccessor.h>
+#include <ChimeraTK/TwoDRegisterAccessor.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
 #include "version.h"
 
-using namespace mtca4u;
+using namespace ChimeraTK;
 using namespace std;
 
 
@@ -37,10 +37,9 @@ typedef TwoDRegisterAccessor<double> dma_Accessor_t;
 
 //typedef boost::shared_ptr<Device<DummyBackend>::RegisterAccessor> RegisterAccessor_t;
 typedef boost::shared_ptr<Device::RegisterAccessor> RegisterAccessor_t;
-typedef mtca4u::RegisterInfoMap::RegisterInfo RegisterInfo_t;
+typedef ChimeraTK::RegisterInfoMap::RegisterInfo RegisterInfo_t;
 
-//boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > getDevice(const string& deviceName, const string &dmapFileName);
-boost::shared_ptr< mtca4u::Device> getDevice(const string& deviceName, const string &dmapFileName);
+boost::shared_ptr< ChimeraTK::Device> getDevice(const string& deviceName, const string &dmapFileName);
 dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName);
 void printSeqList (const dma_Accessor_t& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 std::vector<string> createArgList(uint argc, const char* argv[], uint maxArgs);
@@ -56,7 +55,7 @@ typedef void (*CmdFnc)(unsigned int, const char **);
 
 struct Command {
   string Name; CmdFnc pCallback; string Description; string Example;
-  Command(string n,CmdFnc p, string d, string e) : Name(n), pCallback(p), Description(d), Example(e) {};
+  Command(string n,CmdFnc p, string d, string e) : Name(n), pCallback(p), Description(d), Example(e) {}
 };
 
 void PrintHelp(unsigned int, const char **);
@@ -146,7 +145,7 @@ int main(int argc, const char* argv[])
  *              Come up with a new, proper mechanism.
  */
 // we intentinally use the copy argument so we can safely modify the argument inside the function
-boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName,
+boost::shared_ptr< ChimeraTK::Device > getDevice(const string& deviceName,
                                               string dmapFileName = ""){
 
   if (deviceName.substr(0,6) != "sdm://"){
@@ -176,9 +175,9 @@ boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName,
   }
 
   // Set the dmap file in any case. Some devices might require it, even if the device name is given as a URI
-  mtca4u::BackendFactory::getInstance().setDMapFilePath( dmapFileName );
+  ChimeraTK::BackendFactory::getInstance().setDMapFilePath( dmapFileName );
 
-  boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
+  boost::shared_ptr< ChimeraTK::Device > tempDevice (new Device());
   tempDevice->open(deviceName);
   return tempDevice;
 }
@@ -232,9 +231,9 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
   for (; it != filesParser.end(); ++it)
   {
     // tell the factory which dmap file to use before calling Device::open
-    mtca4u::BackendFactory::getInstance().setDMapFilePath( it->first.dmapFileName );
+    ChimeraTK::BackendFactory::getInstance().setDMapFilePath( it->first.dmapFileName );
 
-    boost::shared_ptr< mtca4u::Device > tempDevice (new Device());
+    boost::shared_ptr< ChimeraTK::Device > tempDevice (new Device());
     tempDevice->open(it->first.deviceName);
 
     bool available = false;
@@ -262,7 +261,7 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 /** Print the module and register name.
  *  Just a helper function to avoid duplicate code and if/then/elses
  */
-void printModuleRegisterName(mtca4u::RegisterInfoMap::RegisterInfo const & registerInfo){
+void printModuleRegisterName(ChimeraTK::RegisterInfoMap::RegisterInfo const & registerInfo){
     if(registerInfo.module.empty()){
       cout << registerInfo.name.c_str() << "\t";
     } else {
@@ -282,12 +281,10 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
   if(argc < 1)
     throw ChimeraTK::logic_error("Not enough input arguments.");
 
-  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
-
-  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
 
 
-  boost::shared_ptr<const mtca4u::RegisterInfoMap> map = device->getRegisterMap();
+  boost::shared_ptr<const ChimeraTK::RegisterInfoMap> map = device->getRegisterMap();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
@@ -329,8 +326,7 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
   if(argc < 3)
     throw ChimeraTK::logic_error("Not enough input arguments.");
 
-  //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
-  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
 
   RegisterInfo_t regInfo = reg->getRegisterInfo();
@@ -354,7 +350,7 @@ void getRegisterSize(unsigned int argc, const char *argv[])
     throw ChimeraTK::logic_error("Not enough input arguments.");
 
 
-  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
   RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
 
   cout << reg->getRegisterInfo().nElements << std::endl;
@@ -387,7 +383,7 @@ void readRegisterInternal(std::vector<string> argList)
 {
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
 
-  boost::shared_ptr< mtca4u::Device > device = getDevice(argList[pp_device]);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(argList[pp_device]);
 
   auto registerPath =  RegisterPath(argList[pp_module])/argList[pp_register];
 
@@ -435,7 +431,7 @@ void writeRegister(unsigned int argc, const char *argv[])
     throw ChimeraTK::logic_error("Not enough input arguments.");
   }
 
-  boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[pp_device]);
   auto registerPath =  RegisterPath(argv[pp_module])/argv[pp_register];
 
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
@@ -524,7 +520,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 
 dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
 
-  boost::shared_ptr< mtca4u::Device > device = getDevice(deviceName);
+  boost::shared_ptr< ChimeraTK::Device > device = getDevice(deviceName);
   auto deMuxedData = device->getTwoDRegisterAccessor<double>(module, regionName);
   deMuxedData.read();
   return deMuxedData;
@@ -640,7 +636,7 @@ uint stringToUIntWithZeroDefault(const string &userEnteredValue){
   }
 
   // Just extract the number and convert a possible conversion exception to
-  // an mtca4u::Exception with proper error message
+  // an ChimeraTK::logic_error with proper error message
   uint numElements;
   try {
     numElements = std::stoul(userEnteredValue);

@@ -128,7 +128,7 @@ int main(int argc, const char* argv[])
     else it->pCallback(argc - 2, &argv[2]);
   }
 
-  catch ( std::logic_error &e )
+  catch ( ChimeraTK::logic_error &e )
   {
     cerr << e.what() << endl;
     return 1;

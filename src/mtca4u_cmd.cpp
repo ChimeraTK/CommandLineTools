@@ -598,7 +598,7 @@ uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
       offset = std::stoul(userEnteredOffset);
     }
     catch (invalid_argument&) {
-      throw ChimeraTK::logic_error("Could not convert offset");
+      throw ChimeraTK::logic_error("Could not convert Offset");
     }
   }
 

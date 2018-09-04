@@ -128,7 +128,7 @@ int main(int argc, const char* argv[])
     else it->pCallback(argc - 2, &argv[2]);
   }
 
-  catch ( Exception &e )
+  catch ( std::logic_error &e )
   {
     cerr << e.what() << endl;
     return 1;

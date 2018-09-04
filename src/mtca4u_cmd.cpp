@@ -139,7 +139,7 @@ int main(int argc, const char* argv[])
 }
 
 /**
- * Gets an opened device from the factory. 
+ * Gets an opened device from the factory.
  *
  * @param dmapFileName File to be loaded or all in the current directory if empty
  * @todo FIXME: This has the old behaviour that it scans all dmap files in the current directory, which is deprecated.
@@ -147,34 +147,34 @@ int main(int argc, const char* argv[])
  */
 // we intentinally use the copy argument so we can safely modify the argument inside the function
 boost::shared_ptr< mtca4u::Device > getDevice(const string& deviceName,
-					      string dmapFileName = ""){
+                                              string dmapFileName = ""){
 
   if (deviceName.substr(0,6) != "sdm://"){
     /* If the device name is not an sdm, the dmap file path has to be set. Try to determine it if not given.
        For SDM URIs the dmap file name can be empty. */
-    
+
     if (dmapFileName.empty()){ // find the correct dmap file in the current directory, using the DMapFilesParser
       // scan all dmap files in the current directory
       DMapFilesParser filesParser(".");
       for (DMapFilesParser::iterator it = filesParser.begin();
-	   it != filesParser.end(); ++it){
-	if (deviceName == it->first.deviceName){
-	  dmapFileName = it->first.dmapFileName;
-	  break;    
-	}
+           it != filesParser.end(); ++it){
+        if (deviceName == it->first.deviceName){
+          dmapFileName = it->first.dmapFileName;
+          break;
+        }
       }
     }
 
     // Throw here if the alias has not been found in any dmap file.
-    // note: In priciple we could leave the dmapFileName still empty and let the factory throw 
+    // note: In priciple we could leave the dmapFileName still empty and let the factory throw
     // an "unknown alias" exception. But it would complain that it could not open a "" dmap file
     // which is confusing because the dmap file actually has been scanned, just not by the factory. So
     // we'd better throw here.
     if (dmapFileName.empty()){
-      throw Exception("Unknown device '" + deviceName + "'.", 2);
+      throw ChimeraTK::logic_error("Unknown device '" + deviceName + "'.");
     }
   }
-  
+
   // Set the dmap file in any case. Some devices might require it, even if the device name is given as a URI
   mtca4u::BackendFactory::getInstance().setDMapFilePath( dmapFileName );
 
@@ -198,8 +198,8 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
   for (vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it)
   {
     cout << "  " << it->Name << "\t" << it->Example << "\t" << it->Description << endl;
-  }    
-  cout << endl << endl << "For further help or bug reports please contact michael.heuer@desy.de" << endl << endl; 
+  }
+  cout << endl << endl << "For further help or bug reports please contact michael.heuer@desy.de" << endl << endl;
 }
 
 /**
@@ -210,7 +210,7 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ [])
  *
  */
 void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
-{ 
+{
   cout << command_line_tools::VERSION << std::endl;
 }
 
@@ -222,7 +222,7 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/[])
  *
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
-{ 
+{
   DMapFilesParser filesParser(".");
   cout << endl << "Available devices: " << endl << endl;
   cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
@@ -241,7 +241,7 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
     int32_t firmware = 0;
     int32_t revision = 0;
 
-    try { 
+    try {
       //tempDevice.openDev(it->first.uri, it->first.mapFileName);
       tempDevice->readReg("WORD_FIRMWARE",&firmware);
       tempDevice->readReg("WORD_REVISION",&revision);
@@ -280,7 +280,7 @@ void printModuleRegisterName(mtca4u::RegisterInfoMap::RegisterInfo const & regis
 void getDeviceInfo(unsigned int argc, const char* argv[])
 {
   if(argc < 1)
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
 
   //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
 
@@ -305,16 +305,16 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 
   if(n2DChannels > 0){
     cout <<"\n2D registers\n"
-	 <<"Name\tnChannels\tnElementsPerChannel\n";
+         <<"Name\tnChannels\tnElementsPerChannel\n";
     for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
       if( cit->getNumberOfDimensions() != 2){
-	continue;
+        continue;
       }
       printModuleRegisterName(*cit);
       cout << cit->getNumberOfChannels()<< "\t\t"<< cit->nElements << endl;
     }
   }
-  
+
 }
 
 /**
@@ -327,7 +327,7 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 void getRegisterInfo(unsigned int argc, const char *argv[])
 {
   if(argc < 3)
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
 
   //boost::shared_ptr< mtca4u::Device< mtca4u::DummyBackend > > device = getDevice(argv[0]);
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
@@ -351,7 +351,7 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
 void getRegisterSize(unsigned int argc, const char *argv[])
 {
   if(argc < 3)
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
 
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[0]);
@@ -374,7 +374,7 @@ void readRegister(unsigned int argc, const char* argv[])
   const unsigned int maxCmdArgs = 6;
 
   if(argc < 3){
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
   }
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
@@ -432,12 +432,12 @@ void writeRegister(unsigned int argc, const char *argv[])
   const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
 
   if(argc < 4){
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
   }
 
   boost::shared_ptr< mtca4u::Device > device = getDevice(argv[pp_device]);
   auto registerPath =  RegisterPath(argv[pp_module])/argv[pp_register];
-  
+
   const uint32_t offset = (argc > pp_offset) ? stoul(argv[pp_offset]) : 0;
 
   std::vector<string> vS;
@@ -446,15 +446,15 @@ void writeRegister(unsigned int argc, const char *argv[])
   size_t numElements = vS.size();
 
   auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
- 
+
   try {
     std::transform(vS.begin(), vS.end(), accessor.begin(), [](const string& s){ return stod(s); });
   }
-  catch(invalid_argument &ex) {
-    throw Exception("Could not convert parameter to double.",3);// + d + " to double: " + ex.what(), 3);
+  catch(invalid_argument&) {
+    throw ChimeraTK::logic_error("Could not convert parameter to double.");// + d + " to double: " + ex.what(), 3);
   }
-  catch(out_of_range &ex) {
-    throw Exception("Could not convert parameter to double.",4);// + d + " to double: " + ex.what(), 3);
+  catch(out_of_range&) {
+    throw ChimeraTK::logic_error("Could not convert parameter to double.");// + d + " to double: " + ex.what(), 3);
   }
 
   accessor.write();
@@ -475,7 +475,7 @@ void readDmaRawData(unsigned int argc, const char *argv[])
   const unsigned int maxCmdArgs = 6;
 
   if(argc < 3){
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
   }
   // validate argc
   argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
@@ -494,7 +494,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   const unsigned int pp_deviceName = 0, pp_module = 1, pp_register = 2,
       pp_seqList = 3, pp_offset = 4, pp_elements = 5;
   if (argc < 3) {
-    throw Exception("Not enough input arguments.", 1);
+    throw ChimeraTK::logic_error("Not enough input arguments.");
   }
 
   // validate argc
@@ -562,17 +562,17 @@ std::vector<uint> extractSequenceList(string const & list, const dma_Accessor_t&
         std::stringstream ss;
         ss << "seqNum invalid. Valid seqNumbers are in the range [0, "
             << (numSequences - 1) << "]";
-        throw Exception(ss.str(), 1);
+        throw ChimeraTK::logic_error(ss.str());
       }
 
       seqList.push_back(tmpSeqNum);
     }
     return seqList;
   }
-  catch (invalid_argument &ex) {
+  catch (invalid_argument&) {
     std::stringstream ss;
     ss << "Could not convert sequence List";
-    throw Exception(ss.str(), 3); // + d + " to double: " + ex.what(), 3);
+    throw ChimeraTK::logic_error(ss.str()); // + d + " to double: " + ex.what(), 3);
   }
 }
 
@@ -601,13 +601,13 @@ uint extractOffset(const string &userEnteredOffset, uint maxOffset) {
     try {
       offset = std::stoul(userEnteredOffset);
     }
-    catch (invalid_argument &ex) {
-      throw Exception("Could not convert Offset", 1);
+    catch (invalid_argument&) {
+      throw ChimeraTK::logic_error("Could not convert offset");
     }
   }
 
   if (offset > maxOffset) {
-    throw Exception("Offset exceed register size.", 1);
+    throw ChimeraTK::logic_error("Offset exceed register size.");
   }
 
   return offset;
@@ -624,11 +624,11 @@ uint extractNumElements(const string &userEnteredValue,
       numElements = std::stoul(userEnteredValue);
     }
   }
-  catch (invalid_argument &ex) {
-    throw Exception("Could not convert numElements to return", 1);
+  catch (invalid_argument&) {
+    throw ChimeraTK::logic_error("Could not convert numElements to return");
   }
   if (numElements > (maxElements - validOffset)) {
-    throw Exception("Data size exceed register size.", 1);
+    throw ChimeraTK::logic_error("Data size exceed register size.");
   }
   return numElements;
 }
@@ -639,14 +639,14 @@ uint stringToUIntWithZeroDefault(const string &userEnteredValue){
     return 0;
   }
 
-  // Just extract the number and convert a possible conversion exception to 
+  // Just extract the number and convert a possible conversion exception to
   // an mtca4u::Exception with proper error message
   uint numElements;
   try {
     numElements = std::stoul(userEnteredValue);
   }
-  catch (invalid_argument &) {
-    throw Exception("Could not convert numElements or offset to a valid number.", 1);
+  catch (invalid_argument&) {
+    throw ChimeraTK::logic_error("Could not convert numElements or offset to a valid number.");
   }
 
   return numElements;
@@ -659,7 +659,7 @@ std::string extractDisplayMode(const string &displayMode) {
   } // default
 
   if ((displayMode != "raw") && (displayMode != "hex") && (displayMode != "double")) {
-    throw Exception("Invalid display mode; Use raw | hex", 1);
+    throw ChimeraTK::logic_error("Invalid display mode; Use raw | hex");
   }
   return displayMode;
 }

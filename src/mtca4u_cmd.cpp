@@ -70,7 +70,7 @@ void writeRegister(unsigned int, const char **);
 void readDmaRawData(unsigned int, const char **);
 void readMultiplexedData(unsigned int , const char **);
 
-vector<Command> vectorOfCommands = {
+static vector<Command> vectorOfCommands = {
     Command("help",&PrintHelp,"Prints the help text","\t\t\t\t\t"),
     Command("version",&getVersion,"Prints the tools version","\t\t\t\t"),
     Command("info",&getInfo,"Prints all devices","\t\t\t\t\t"),
@@ -119,7 +119,7 @@ int main(int argc, const char* argv[])
     }
 
     // Check if the method is implemented
-    else if (NULL == it->pCallback) {
+    else if (nullptr == it->pCallback) {
       cerr << "Command not implemented yet." << endl;
       return 1;
     }

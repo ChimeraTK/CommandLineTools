@@ -1,5 +1,5 @@
 Name		Elements	Signed		Bits		Fractional_Bits		Description
 WORD_FIRMWARE	1		0		32		0			 
 Name		Elements	Signed		Bits		Fractional_Bits		Description
-AREA_DMAABLE_FIXEDPOINT16_3	1024		1		16		3			 
+ADC.AREA_DMAABLE_FIXEDPOINT16_3	1024		1		16		3			 
 Not enough input arguments.

@@ -242,8 +242,8 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[])
 
     try {
       //tempDevice.openDev(it->first.uri, it->first.mapFileName);
-      tempDevice->readReg("WORD_FIRMWARE",&firmware);
-      tempDevice->readReg("WORD_REVISION",&revision);
+      firmware = tempDevice->read<int32_t>("WORD_FIRMWARE");
+      revision = tempDevice->read<int32_t>("WORD_REVISION");
       tempDevice->close();
       available = true;
     }
@@ -283,32 +283,34 @@ void getDeviceInfo(unsigned int argc, const char* argv[])
 
   boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
 
-
-  boost::shared_ptr<const ChimeraTK::RegisterInfoMap> map = device->getRegisterMap();
+  auto catalog = device->getRegisterCatalogue();
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
 
-  unsigned int index = 0;
   unsigned int n2DChannels = 0;
-  for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
-    if( cit->getNumberOfDimensions() == 2){
+  for(auto &reg : catalog) {
+    if(reg.getNumberOfDimensions() == 2) {
       ++n2DChannels;
       continue;
     }
-    printModuleRegisterName(*cit);
-    cout << cit->nElements << "\t\t" << cit->signedFlag << "\t\t";
-    cout << cit->width << "\t\t" << cit->nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
+    cout << reg.getRegisterName().getWithAltSeparator() << "\t";
+    cout << reg.getNumberOfElements() << "\t\t";
+    auto *reg_casted = dynamic_cast<ChimeraTK::RegisterInfoMap::RegisterInfo*>(&reg);
+    if(reg_casted) {
+      cout << reg_casted->signedFlag << "\t\t";
+      cout << reg_casted->width << "\t\t" << reg_casted->nFractionalBits << "\t\t\t "; // ToDo: Add Description
+    }
+    cout << endl;
   }
 
   if(n2DChannels > 0){
     cout <<"\n2D registers\n"
          <<"Name\tnChannels\tnElementsPerChannel\n";
-    for (auto cit = map->begin(); cit != map->end(); ++cit, ++index) {
-      if( cit->getNumberOfDimensions() != 2){
-        continue;
-      }
-      printModuleRegisterName(*cit);
-      cout << cit->getNumberOfChannels()<< "\t\t"<< cit->nElements << endl;
+    for(auto &reg : catalog) {
+      if(reg.getNumberOfDimensions() != 2) continue;
+      cout << reg.getRegisterName().getWithAltSeparator() << "\t";
+      cout << reg.getNumberOfChannels() << "\t\t";
+      cout << reg.getNumberOfElements() << endl;
     }
   }
 
@@ -327,13 +329,18 @@ void getRegisterInfo(unsigned int argc, const char *argv[])
     throw ChimeraTK::logic_error("Not enough input arguments.");
 
   boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
-  RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
+  auto catalog = device->getRegisterCatalogue();
 
-  RegisterInfo_t regInfo = reg->getRegisterInfo();
+  auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
-  cout << regInfo.name.c_str() << "\t" << regInfo.nElements << "\t\t" << regInfo.signedFlag << "\t\t";
-  cout << regInfo.width << "\t\t" << regInfo.nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
+  cout << regInfo->getRegisterName().getWithAltSeparator() << "\t" << regInfo->getNumberOfElements();
+
+  auto *regInfo_casted = dynamic_cast<ChimeraTK::RegisterInfoMap::RegisterInfo*>(regInfo.get());
+  if(regInfo_casted) {
+    cout << "\t\t" << regInfo_casted->signedFlag << "\t\t";
+    cout << regInfo_casted->width << "\t\t" << regInfo_casted->nFractionalBits << "\t\t\t" << " " << endl; // ToDo: Add Description
+  }
 }
 
 /**
@@ -351,9 +358,11 @@ void getRegisterSize(unsigned int argc, const char *argv[])
 
 
   boost::shared_ptr< ChimeraTK::Device > device = getDevice(argv[0]);
-  RegisterAccessor_t reg = device->getRegisterAccessor(argv[2], argv[1]);
+  auto catalog = device->getRegisterCatalogue();
 
-  cout << reg->getRegisterInfo().nElements << std::endl;
+  auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
+
+  cout << regInfo->getNumberOfElements() << std::endl;
 
 }
 
@@ -521,7 +530,7 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
 dma_Accessor_t createOpenedMuxDataAccesor(const string &deviceName, const string &module, const string &regionName) {
 
   boost::shared_ptr< ChimeraTK::Device > device = getDevice(deviceName);
-  auto deMuxedData = device->getTwoDRegisterAccessor<double>(module, regionName);
+  auto deMuxedData = device->getTwoDRegisterAccessor<double>(module+"/"+regionName);
   deMuxedData.read();
   return deMuxedData;
 }

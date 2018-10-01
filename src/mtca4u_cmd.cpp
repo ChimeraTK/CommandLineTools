@@ -509,8 +509,8 @@ void readMultiplexedData(unsigned int argc, const char *argv[]) {
   dma_Accessor_t deMuxedData = createOpenedMuxDataAccesor( argList[pp_deviceName],
       argList[pp_module],
       argList[pp_register]);
-  uint sequenceLength = deMuxedData.getNumberOfSamples();
-  uint numSequences = deMuxedData.getNumberOfDataSequences();
+  uint sequenceLength = deMuxedData.getNElementsPerChannel();
+  uint numSequences = deMuxedData.getNChannels();
   std::vector<uint> seqList = extractSequenceList(argList[pp_seqList],
       deMuxedData,
       numSequences);
@@ -670,7 +670,7 @@ std::string extractDisplayMode(const string &displayMode) {
 }
 
 std::vector<uint> createListWithAllSequences(const dma_Accessor_t &deMuxedData) {
-  uint numSequences = deMuxedData.getNumberOfDataSequences();
+  uint numSequences = deMuxedData.getNChannels();
   std::vector<uint> seqList(numSequences);
   for(uint index = 0; index < numSequences; ++index){
     seqList[index] = index;

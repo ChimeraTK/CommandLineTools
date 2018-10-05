@@ -9,7 +9,7 @@ set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 #Note: We need the so-version because we treat it like a library, with version number in the executable name
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
- 
+
 set(ChimeraTK-DeviceAccess_MIN_VERSION 01.00)
 FIND_PACKAGE(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
@@ -49,9 +49,10 @@ configure_file(cmake/referenceVersionCommand.txt.in
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
-target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARIES})    
+set_target_properties(mtca4u PROPERTIES LINKER_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
+target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARIES})
 
-#change the install prefix to the source directory in case the user has not specified a destination 
+#change the install prefix to the source directory in case the user has not specified a destination
 #i. e. CMAKE_INSTALL_PREFIX is not set manually
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR} CACHE PATH "Install directory
@@ -83,7 +84,7 @@ ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
 # sub-directory with the content of the source directory. Eg:
 # <CMAKE_SOURCE_DIR>/a/b/source_dir as input creates
 # <project_build_dir>/source_dir and will have .txt, .sh, .py, .dmap and .map
-# files from the source directory. 
+# files from the source directory.
 MACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY directory )
     get_filename_component(parent_directory ${directory} NAME) # Kind of a hack
     # as we are actually picking the directory name and not the filename.
@@ -97,15 +98,15 @@ ENDMACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY )
 
 # The macro currently filters out the editor back up files that end with ~ .
 # The macro picks up only these specified formats from the
-# source directory : .dmap, .map, .txt, .py, .sh. New formats formats may be added by 
+# source directory : .dmap, .map, .txt, .py, .sh. New formats formats may be added by
 # modifying the globbing expression
 MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
     FILE( GLOB list_of_files_to_copy
         "${source_directory}/*[!~].sh" # <- filter out abc~.sh
         "${source_directory}/*[!~].py" # <- filter out abc~.py
-        "${source_directory}/*[!~].dmap" 
-        "${source_directory}/*[!~].map" 
-        "${source_directory}/*[!~].txt") 
+        "${source_directory}/*[!~].dmap"
+        "${source_directory}/*[!~].map"
+        "${source_directory}/*[!~].txt")
     foreach( file ${list_of_files_to_copy} )
         FILE( COPY ${file} DESTINATION ${target_directory} )
     endforeach( file )
@@ -125,13 +126,13 @@ COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts")
 # Not copying the dmap files to its own sub directory, as the
 # mtca4u  executable currently requires the dMap file to be present in the
 # executable directory.  Might reconsider copying dMap content into its own
-# subdirectory, once code can load a dMapfile from any location. 
-set(dmap_source_directory "${CMAKE_SOURCE_DIR}/tests/dMapFiles" ) 
+# subdirectory, once code can load a dMapfile from any location.
+set(dmap_source_directory "${CMAKE_SOURCE_DIR}/tests/dMapFiles" )
 COPY_SOURCE_TO_TARGET(${dmap_source_directory} ${PROJECT_BINARY_DIR})
 
 
 # prepare a list with names of scripts
-FILE(GLOB location_of_script_files 
+FILE(GLOB location_of_script_files
     "${PROJECT_BINARY_DIR}/scripts/*.py"
     "${PROJECT_BINARY_DIR}/scripts/*.sh")
 ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )

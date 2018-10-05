@@ -49,7 +49,7 @@ configure_file(cmake/referenceVersionCommand.txt.in
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
-set_target_properties(mtca4u PROPERTIES LINKER_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
+set_target_properties(mtca4u PROPERTIES LINK_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
 target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARIES})
 
 #change the install prefix to the source directory in case the user has not specified a destination

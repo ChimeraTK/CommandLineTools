@@ -6,6 +6,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_RegisterSizeCommand.txt"
 expected_console_output="./referenceTexts/referenceRegisterSizeCommand.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
     bash -c '$0 register_size DUMMY1 "" WORD_FIRMWARE > $1 2>&1' $mtca4u_executable $actual_console_output

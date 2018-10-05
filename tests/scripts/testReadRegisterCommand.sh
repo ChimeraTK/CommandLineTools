@@ -11,6 +11,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_ReadRegisterCommand.txt"
 expected_console_output="./referenceTexts/referenceReadRegisterCommand.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
   ( flock 8 # lock for mtcadummys1
 

@@ -6,7 +6,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_mtca4uDeviceInfo.txt"
 expected_console_output="./referenceTexts/referenceMtca4uDeviceInfo.txt"
 
-
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
   # print out device info for a card without modules

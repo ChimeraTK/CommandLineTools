@@ -11,6 +11,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_ReadDMARawCommand.txt"
 expected_console_output="./referenceTexts/referenceReadDMARawCommand.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
     # write to the adc enable bit to set the parabolic values inside the dma region 

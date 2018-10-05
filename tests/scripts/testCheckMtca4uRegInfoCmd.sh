@@ -12,6 +12,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_mtca4uRegInfo.txt"
 expected_console_output="./referenceTexts/referenceMtca4uRegInfo.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
   # Get Information from a card that has no modules described in its mapfile

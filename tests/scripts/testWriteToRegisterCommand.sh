@@ -10,6 +10,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_WriteToRegisterCommand.txt"
 expected_console_output="./referenceTexts/referenceWriteToRegisterCommand.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
     # wite to a bad register

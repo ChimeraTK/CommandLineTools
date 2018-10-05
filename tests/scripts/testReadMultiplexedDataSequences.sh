@@ -12,6 +12,7 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_ReadMultiplexedDataSequences.txt"
 expected_console_output="./referenceTexts/referenceReadMultiplexedDataSequences.txt"
 
+mkdir -p /var/run/lock/mtcadummy
 ( flock 9 # lock for mtcadummys0
 
     # Make sure the AREA_DMA_VIA_DMA region is set to parabolic values

@@ -148,9 +148,12 @@ int main(int argc, const char* argv[])
 boost::shared_ptr< ChimeraTK::Device > getDevice(const string& deviceName,
                                               string dmapFileName = ""){
 
-  if (deviceName.substr(0,6) != "sdm://"){
-    /* If the device name is not an sdm, the dmap file path has to be set. Try to determine it if not given.
-       For SDM URIs the dmap file name can be empty. */
+  bool isSdm = (deviceName.substr(0,6) == "sdm://");//starts with sdm://
+  bool isCdd = ( (deviceName.front()=='(') && (deviceName.back()==')') ); // starts with '(' and end with ')' = Chimera Device Descriptor
+  
+  if  ( !isSdm && !isCdd ){
+    /* If the device name is not an sdm and not a cdd, the dmap file path has to be set. Try to determine it if not given.
+       For SDM URIs and CDDs the dmap file name can be empty. */
 
     if (dmapFileName.empty()){ // find the correct dmap file in the current directory, using the DMapFilesParser
       // scan all dmap files in the current directory

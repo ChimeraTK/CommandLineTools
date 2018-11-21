@@ -92,15 +92,15 @@ mkdir -p /var/run/lock/mtcadummy
     bash -c '$0 read NON_EXISTENT_DEVICE ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
     # Not using dmap and map file, but sdm uri and numerical address
-    echo "Command called with SDM URI and numerical address" >> $actual_console_output
+    echo "Command called with SDM URI / CDD and numerical address" >> $actual_console_output
     bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/0/60" 0 0 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/0/60" >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read "(pci:mtcadummys0)" "" "#/0/60" >> $1  2>&1' $mtca4u_executable $actual_console_output 
     # Check reading more than one word, in raw and normal mode 
     bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/0*16" >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/0*16" 0 0 raw >> $1 2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read "(pci:mtcadummys0)" "" "#/2/0*16" 0 0 raw >> $1 2>&1' $mtca4u_executable $actual_console_output 
     # Test reading only two words with offet
     bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/4*16" 1 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/4*16" 1 2 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read "(pci:mtcadummys0)" "" "#/2/4*16" 1 2 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
     sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toFixedPoint()./d" -i $actual_console_output
     sed -e "/Please use toRaw() instead./d" -i $actual_console_output

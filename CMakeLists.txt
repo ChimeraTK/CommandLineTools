@@ -45,7 +45,8 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 configure_file(cmake/referenceVersionCommand.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceVersionCommand.txt")
 
-
+configure_file(cmake/referenceReadRegisterCommand.txt.in
+  "${PROJECT_BINARY_DIR}/referenceTexts/referenceReadRegisterCommand.txt")
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})

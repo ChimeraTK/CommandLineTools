@@ -34,5 +34,4 @@ mkdir -p /var/run/lock/mtcadummy
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
-cat $actual_console_output
 diff $actual_console_output $expected_console_output

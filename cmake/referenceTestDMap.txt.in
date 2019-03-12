@@ -31,8 +31,8 @@ Available devices:
 
 Name	Device			Map-File			Firmware	Revision
 DUMMY1	sdm://./pci:mtcadummys0		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_withoutModules.map	na		na
-DUMMY2	sdm://./pci:mtcadummys1		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy.map	na		na
-DUMMY3	sdm://./pci:mtcadummys2		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_bad.map	na		na
+DUMMY2	(pci:mtcadummys1?map=mtcadummy.map)		na	na		na
+DUMMY3	sdm://./pci:mtcadummys2=mtcadummy_bad.map		na	na		na
 DUMMY4	sdm://./pci:mtcadummys3		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_bad.map	na		na
 DUMMY5	sdm://./pci:llrfdummys4		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy.map	na		na
 

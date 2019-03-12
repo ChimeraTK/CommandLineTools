@@ -102,11 +102,6 @@ mkdir -p /var/run/lock/mtcadummy
     bash -c '$0 read sdm://./pci:mtcadummys0 "" "#/2/4*16" 1 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     bash -c '$0 read "(pci:mtcadummys0)" "" "#/2/4*16" 1 2 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
-    sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toFixedPoint()./d" -i $actual_console_output
-    sed -e "/Please use toRaw() instead./d" -i $actual_console_output
-    sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toDouble()./d" -i $actual_console_output
-    sed -e "/Please use toCooked() instead./d" -i $actual_console_output
-
   ) 8>/var/run/lock/mtcadummy/mtcadummys1
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 

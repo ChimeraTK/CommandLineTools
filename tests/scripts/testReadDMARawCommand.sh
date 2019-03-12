@@ -76,7 +76,4 @@ $mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" hj  >
 echo "bad display mode" >> $actual_console_output
 $mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" 0 20 invalid_dispaly_option >> $actual_console_output 2>&1
 
-sed -e " /You are using the deprecated function mtca4u::FixedPointConverter::toFixedPoint()./d" -i $actual_console_output
-sed -e "/Please use toRaw() instead./d" -i $actual_console_output
-
 diff $actual_console_output $expected_console_output

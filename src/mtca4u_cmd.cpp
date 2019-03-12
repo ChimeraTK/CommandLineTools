@@ -134,19 +134,19 @@ int main(int argc, const char* argv[]) {
 
 // Try to find a dmap file in the current directory.
 // Returns an empty string if not found.
-std::string findDMapFile(){
-  std::vector< boost::filesystem::path > dmapFileNames;
-  for (auto & dirEntry : boost::filesystem::directory_iterator(".")){
-    if (dirEntry.path().extension() == ".dmap"){
+std::string findDMapFile() {
+  std::vector<boost::filesystem::path> dmapFileNames;
+  for(auto& dirEntry : boost::filesystem::directory_iterator(".")) {
+    if(dirEntry.path().extension() == ".dmap") {
       dmapFileNames.push_back(dirEntry.path());
     }
   }
   // No DMap file found. Do not throw here but return an empty string.
   // We can print a much nicer error message in the contect where we know the device alias.
-  if (dmapFileNames.empty()){
+  if(dmapFileNames.empty()) {
     return "";
   }
-  if (dmapFileNames.size() > 1){
+  if(dmapFileNames.size() > 1) {
     // FIXME: search for a file named CommandLineTools.dmap and return it. Only throw if not found.
     throw ChimeraTK::logic_error("Sorry, more than one dmap file in the directory is not allowed.");
   }
@@ -164,7 +164,7 @@ std::string findDMapFile(){
  */
 // we intentinally use the copy argument so we can safely modify the argument
 // inside the function
-boost::shared_ptr< ChimeraTK::Device > getDevice(const string& deviceName){
+boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName) {
   bool isSdm = (deviceName.substr(0, 6) == "sdm://");                       // starts with sdm://
   bool isCdd = ((deviceName.front() == '(') && (deviceName.back() == ')')); // starts with '(' and end with ')' =
                                                                             // Chimera Device Descriptor
@@ -174,15 +174,13 @@ boost::shared_ptr< ChimeraTK::Device > getDevice(const string& deviceName){
        be set. Try to determine it if not given.
        For SDM URIs and CDDs the dmap file name can be empty. */
     std::string dmapFileName = findDMapFile();
-    if (dmapFileName.empty()){
-
-      throw ChimeraTK::logic_error("No dmap file found to resolve alias name '"+deviceName+"'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
+    if(dmapFileName.empty()) {
+      throw ChimeraTK::logic_error("No dmap file found to resolve alias name '" + deviceName +
+          "'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
     }
 
-
-    ChimeraTK::setDMapFilePath( dmapFileName );
+    ChimeraTK::setDMapFilePath(dmapFileName);
   }
-  
 
   boost::shared_ptr<ChimeraTK::Device> tempDevice(new Device());
   tempDevice->open(deviceName);
@@ -232,17 +230,20 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
   ChimeraTK::setDMapFilePath(dmapFileName);
   auto deviceInfoMap = DMapFileParser().parse(dmapFileName);
 
-  for (auto & deviceInfo : *deviceInfoMap){
-    cout << deviceInfo.deviceName << "\t" << deviceInfo.uri << "\t\t"
+  for(auto& deviceInfo : *deviceInfoMap) {
+    cout << deviceInfo.deviceName << "\t" << deviceInfo.uri
+         << "\t\t"
          // mapFileName might be empty
-         << (deviceInfo.mapFileName.empty()?"na":deviceInfo.mapFileName) << "\t"
+         << (deviceInfo.mapFileName.empty() ? "na" : deviceInfo.mapFileName)
+         << "\t"
          // For compatibility: print na. The registers WORD_FIRMWARE and WORD_REVISION
          // don't exist in map files any more, so no one can really have used this feature.
          // It breaks abstraction anyway, so we just disable it, but keep the format for compatibility.
-         <<  "na" << "\t\t" << "na" << endl;
+         << "na"
+         << "\t\t"
+         << "na" << endl;
   }
   cout << endl;
-//           << "na" << endl;
 }
 
 /** Print the module and register name.

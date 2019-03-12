@@ -147,8 +147,14 @@ std::string findDMapFile() {
     return "";
   }
   if(dmapFileNames.size() > 1) {
-    // FIXME: search for a file named CommandLineTools.dmap and return it. Only throw if not found.
-    throw ChimeraTK::logic_error("Sorry, more than one dmap file in the directory is not allowed.");
+    // search for a file named CommandLineTools.dmap and return it. Only throw if not found.
+    for (auto dmapFileName : dmapFileNames){
+      if (dmapFileName.stem() == "CommandLineTools"){
+        return dmapFileName.string();
+      }
+    }
+    
+    throw ChimeraTK::logic_error("Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a symlink) so I know which one to take.");
   }
 
   return dmapFileNames.front().string();

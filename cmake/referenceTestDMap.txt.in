@@ -4,7 +4,7 @@ Testing CDD
 Testing sdm
 444d4d59
 Testing alias
-No dmap file found to resolve alias name 'DUMMY0'. Provide a dmap file or use a ChimeraTK Device Descriptor!
+No dmap file found to resolve alias name 'DUMMY1'. Provide a dmap file or use a ChimeraTK Device Descriptor!
 Testing info
 No dmap file found. No device information available.
 .
@@ -14,7 +14,26 @@ Testing CDD
 Testing sdm
 444d4d59
 Testing alias
-Sorry, more than one dmap file in the directory is not allowed.
+Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a symlink) so I know which one to take.
 Testing info
-Sorry, more than one dmap file in the directory is not allowed.
+Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a symlink) so I know which one to take.
+.
+*** Tests in testTwoDmapFilesOk ***
+Testing CDD
+444d4d59
+Testing sdm
+444d4d59
+Testing alias
+444d4d59
+Testing info
+
+Available devices: 
+
+Name	Device			Map-File			Firmware	Revision
+DUMMY1	sdm://./pci:mtcadummys0		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_withoutModules.map	na		na
+DUMMY2	sdm://./pci:mtcadummys1		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy.map	na		na
+DUMMY3	sdm://./pci:mtcadummys2		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_bad.map	na		na
+DUMMY4	sdm://./pci:mtcadummys3		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy_bad.map	na		na
+DUMMY5	sdm://./pci:llrfdummys4		@PROJECT_BINARY_DIR@/testTwoDmapFilesOk/././mtcadummy.map	na		na
+
 .

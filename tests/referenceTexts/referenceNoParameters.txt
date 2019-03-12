@@ -16,5 +16,5 @@ Available commands are:
   read_seq	Board Module DataRegionName ["sequenceList"] [Offset] [numElements]	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
 
 
-For further help or bug reports please contact michael.heuer@desy.de
+For further help or bug reports please contact chimeratk_support@desy.de
 

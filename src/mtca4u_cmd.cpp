@@ -196,7 +196,7 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ []) {
   for(vector<Command>::iterator it = vectorOfCommands.begin(); it != vectorOfCommands.end(); ++it) {
     cout << "  " << it->Name << "\t" << it->Example << "\t" << it->Description << endl;
   }
-  cout << endl << endl << "For further help or bug reports please contact michael.heuer@desy.de" << endl << endl;
+  cout << endl << endl << "For further help or bug reports please contact chimeratk_support@desy.de" << endl << endl;
 }
 
 /**

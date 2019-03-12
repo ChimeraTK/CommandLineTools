@@ -1,15 +1,3 @@
-/**
- * @file mtca4u_cmd.cpp
- *
- * @brief Main file of the MicroTCA 4 You Command Line Tools
- *
- */
-
-/*
- * Copyright (c) 2014 michael.heuer@desy.de
- *
- */
-
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -18,7 +6,7 @@
 #include <string.h>
 #include <vector>
 
-#include <ChimeraTK/DMapFilesParser.h>
+//#include <ChimeraTK/DMapFilesParser.h>
 #include <ChimeraTK/Device.h>
 #include <ChimeraTK/OneDRegisterAccessor.h>
 #include <ChimeraTK/TwoDRegisterAccessor.h>
@@ -166,25 +154,23 @@ boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName, string 
 
     if(dmapFileName.empty()) { // find the correct dmap file in the current
                                // directory, using the DMapFilesParser
-      // scan all dmap files in the current directory
-      DMapFilesParser filesParser(".");
-      for(DMapFilesParser::iterator it = filesParser.begin(); it != filesParser.end(); ++it) {
-        if(deviceName == it->first.deviceName) {
-          dmapFileName = it->first.dmapFileName;
-          break;
+      std::vector< std::string > dmapFileNames;
+      for (auto & dirEntry : boost::filesystem::directory_iterator(".")){
+        if (dirEntry.path().extension() == ".dmap"){
+          dmapFileNames.push_back(dirEntry.path().string());
         }
       }
+
+      if (dmapFileNames.empty()){
+        throw ChimeraTK::logic_error("No dmap file found to resolve alias name '"+deviceName+"'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
+      }
+      if (dmapFileNames.size() > 1){
+        throw ChimeraTK::logic_error("Sorry, more than one dmap file in the directory is not allowed.");
+
+      }
+      dmapFileName = dmapFileNames.front();
     }
 
-    // Throw here if the alias has not been found in any dmap file.
-    // note: In priciple we could leave the dmapFileName still empty and let the
-    // factory throw an "unknown alias" exception. But it would complain that it
-    // could not open a "" dmap file which is confusing because the dmap file
-    // actually has been scanned, just not by the factory. So we'd better throw
-    // here.
-    if(dmapFileName.empty()) {
-      throw ChimeraTK::logic_error("Unknown device '" + deviceName + "'.");
-    }
   }
 
   // Set the dmap file in any case. Some devices might require it, even if the
@@ -232,42 +218,41 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/ []) {
  *
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
-  DMapFilesParser filesParser(".");
-  cout << endl << "Available devices: " << endl << endl;
-  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
-
-  DMapFilesParser::iterator it = filesParser.begin();
-
-  for(; it != filesParser.end(); ++it) {
-    // tell the factory which dmap file to use before calling Device::open
-    ChimeraTK::BackendFactory::getInstance().setDMapFilePath(it->first.dmapFileName);
-
-    boost::shared_ptr<ChimeraTK::Device> tempDevice(new Device());
-    tempDevice->open(it->first.deviceName);
-
-    bool available = false;
-    int32_t firmware = 0;
-    int32_t revision = 0;
-
-    try {
-      // tempDevice.openDev(it->first.uri, it->first.mapFileName);
-      firmware = tempDevice->read<int32_t>("WORD_FIRMWARE");
-      revision = tempDevice->read<int32_t>("WORD_REVISION");
-      tempDevice->close();
-      available = true;
-    }
-    catch(...) {
-    }
-
-    cout << it->first.deviceName << "\t" << it->first.uri << "\t\t" << it->first.mapFileName << "\t";
-    if(available)
-      cout << firmware << "\t\t" << revision << endl;
-    else
-      cout << "na"
-           << "\t\t"
-           << "na" << endl;
-  }
-  cout << endl;
+  std::cout << "This function has temporarily been disabled to make the code compile." << std::endl;
+//  DMapFilesParser filesParser(".");
+//  cout << endl << "Available devices: " << endl << endl;
+//  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
+//
+//  DMapFilesParser::iterator it = filesParser.begin();
+//
+//  for (; it != filesParser.end(); ++it)
+//  {
+//    // tell the factory which dmap file to use before calling Device::open
+//    ChimeraTK::BackendFactory::getInstance().setDMapFilePath( it->first.dmapFileName );
+//
+//    boost::shared_ptr< ChimeraTK::Device > tempDevice (new Device());
+//    tempDevice->open(it->first.deviceName);
+//
+//    bool available = false;
+//    int32_t firmware = 0;
+//    int32_t revision = 0;
+//
+//    try {
+//      //tempDevice.openDev(it->first.uri, it->first.mapFileName);
+//      firmware = tempDevice->read<int32_t>("WORD_FIRMWARE");
+//      revision = tempDevice->read<int32_t>("WORD_REVISION");
+//      tempDevice->close();
+//      available = true;
+//    }
+//    catch(...) {}
+//
+//    cout << it->first.deviceName << "\t" << it->first.uri << "\t\t" << it->first.mapFileName << "\t";
+//    if (available)
+//      cout << firmware << "\t\t" << revision << endl;
+//    else cout << "na" << "\t\t" << "na" << endl;
+//  }
+//  cout << endl;
+//           << "na" << endl;
 }
 
 /** Print the module and register name.

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <ChimeraTK/Device.h>
+#include <ChimeraTK/DMapFileParser.h>
 #include <ChimeraTK/OneDRegisterAccessor.h>
 #include <ChimeraTK/TwoDRegisterAccessor.h>
 
@@ -224,40 +225,23 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/ []) {
  *
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
-  std::cout << "This function has temporarily been disabled to make the code compile." << std::endl;
-//  DMapFilesParser filesParser(".");
-//  cout << endl << "Available devices: " << endl << endl;
-//  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
-//
-//  DMapFilesParser::iterator it = filesParser.begin();
-//
-//  for (; it != filesParser.end(); ++it)
-//  {
-//    // tell the factory which dmap file to use before calling Device::open
-//    ChimeraTK::BackendFactory::getInstance().setDMapFilePath( it->first.dmapFileName );
-//
-//    boost::shared_ptr< ChimeraTK::Device > tempDevice (new Device());
-//    tempDevice->open(it->first.deviceName);
-//
-//    bool available = false;
-//    int32_t firmware = 0;
-//    int32_t revision = 0;
-//
-//    try {
-//      //tempDevice.openDev(it->first.uri, it->first.mapFileName);
-//      firmware = tempDevice->read<int32_t>("WORD_FIRMWARE");
-//      revision = tempDevice->read<int32_t>("WORD_REVISION");
-//      tempDevice->close();
-//      available = true;
-//    }
-//    catch(...) {}
-//
-//    cout << it->first.deviceName << "\t" << it->first.uri << "\t\t" << it->first.mapFileName << "\t";
-//    if (available)
-//      cout << firmware << "\t\t" << revision << endl;
-//    else cout << "na" << "\t\t" << "na" << endl;
-//  }
-//  cout << endl;
+  cout << endl << "Available devices: " << endl << endl;
+  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
+
+  auto dmapFileName = findDMapFile();
+  ChimeraTK::setDMapFilePath(dmapFileName);
+  auto deviceInfoMap = DMapFileParser().parse(dmapFileName);
+
+  for (auto & deviceInfo : *deviceInfoMap){
+    cout << deviceInfo.deviceName << "\t" << deviceInfo.uri << "\t\t"
+         // mapFileName might be empty
+         << (deviceInfo.mapFileName.empty()?"na":deviceInfo.mapFileName) << "\t"
+         // For compatibility: print na. The registers WORD_FIRMWARE and WORD_REVISION
+         // don't exist in map files any more, so no one can really have used this feature.
+         // It breaks abstraction anyway, so we just disable it, but keep the format for compatibility.
+         <<  "na" << "\t\t" << "na" << endl;
+  }
+  cout << endl;
 //           << "na" << endl;
 }
 

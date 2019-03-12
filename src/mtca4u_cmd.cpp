@@ -6,7 +6,6 @@
 #include <string.h>
 #include <vector>
 
-//#include <ChimeraTK/DMapFilesParser.h>
 #include <ChimeraTK/Device.h>
 #include <ChimeraTK/OneDRegisterAccessor.h>
 #include <ChimeraTK/TwoDRegisterAccessor.h>
@@ -132,6 +131,28 @@ int main(int argc, const char* argv[]) {
   return 0;
 }
 
+// Try to find a dmap file in the current directory.
+// Returns an empty string if not found.
+std::string findDMapFile(){
+  std::vector< boost::filesystem::path > dmapFileNames;
+  for (auto & dirEntry : boost::filesystem::directory_iterator(".")){
+    if (dirEntry.path().extension() == ".dmap"){
+      dmapFileNames.push_back(dirEntry.path());
+    }
+  }
+  // No DMap file found. Do not throw here but return an empty string.
+  // We can print a much nicer error message in the contect where we know the device alias.
+  if (dmapFileNames.empty()){
+    return "";
+  }
+  if (dmapFileNames.size() > 1){
+    // FIXME: search for a file named CommandLineTools.dmap and return it. Only throw if not found.
+    throw ChimeraTK::logic_error("Sorry, more than one dmap file in the directory is not allowed.");
+  }
+
+  return dmapFileNames.front().string();
+}
+
 /**
  * Gets an opened device from the factory.
  *
@@ -142,7 +163,7 @@ int main(int argc, const char* argv[]) {
  */
 // we intentinally use the copy argument so we can safely modify the argument
 // inside the function
-boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName, string dmapFileName = "") {
+boost::shared_ptr< ChimeraTK::Device > getDevice(const string& deviceName){
   bool isSdm = (deviceName.substr(0, 6) == "sdm://");                       // starts with sdm://
   bool isCdd = ((deviceName.front() == '(') && (deviceName.back() == ')')); // starts with '(' and end with ')' =
                                                                             // Chimera Device Descriptor
@@ -151,31 +172,16 @@ boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName, string 
     /* If the device name is not an sdm and not a cdd, the dmap file path has to
        be set. Try to determine it if not given.
        For SDM URIs and CDDs the dmap file name can be empty. */
+    std::string dmapFileName = findDMapFile();
+    if (dmapFileName.empty()){
 
-    if(dmapFileName.empty()) { // find the correct dmap file in the current
-                               // directory, using the DMapFilesParser
-      std::vector< std::string > dmapFileNames;
-      for (auto & dirEntry : boost::filesystem::directory_iterator(".")){
-        if (dirEntry.path().extension() == ".dmap"){
-          dmapFileNames.push_back(dirEntry.path().string());
-        }
-      }
-
-      if (dmapFileNames.empty()){
-        throw ChimeraTK::logic_error("No dmap file found to resolve alias name '"+deviceName+"'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
-      }
-      if (dmapFileNames.size() > 1){
-        throw ChimeraTK::logic_error("Sorry, more than one dmap file in the directory is not allowed.");
-
-      }
-      dmapFileName = dmapFileNames.front();
+      throw ChimeraTK::logic_error("No dmap file found to resolve alias name '"+deviceName+"'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
     }
 
-  }
 
-  // Set the dmap file in any case. Some devices might require it, even if the
-  // device name is given as a URI
-  ChimeraTK::BackendFactory::getInstance().setDMapFilePath(dmapFileName);
+    ChimeraTK::setDMapFilePath( dmapFileName );
+  }
+  
 
   boost::shared_ptr<ChimeraTK::Device> tempDevice(new Device());
   tempDevice->open(deviceName);

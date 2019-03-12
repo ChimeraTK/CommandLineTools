@@ -1,0 +1,20 @@
+*** Tests in testNoDmapFile ***
+Testing CDD
+444d4d59
+Testing sdm
+444d4d59
+Testing alias
+No dmap file found to resolve alias name 'DUMMY0'. Provide a dmap file or use a ChimeraTK Device Descriptor!
+Testing info
+No dmap file found. No device information available.
+.
+*** Tests in testTwoDmapFilesBroken ***
+Testing CDD
+444d4d59
+Testing sdm
+444d4d59
+Testing alias
+Sorry, more than one dmap file in the directory is not allowed.
+Testing info
+Sorry, more than one dmap file in the directory is not allowed.
+.

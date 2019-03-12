@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 2.8.0)
 project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
-set(${PROJECT_NAME}_MINOR_VERSION 14)
+set(${PROJECT_NAME}_MINOR_VERSION 15)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
 set(${PROJECT_NAME}_VERSION
   ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 #Note: We need the so-version because we treat it like a library, with version number in the executable name
 set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
 
-set(ChimeraTK-DeviceAccess_MIN_VERSION 01.00)
+set(ChimeraTK-DeviceAccess_MIN_VERSION 01.01)
 FIND_PACKAGE(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
 
@@ -44,9 +44,10 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 # update revferenceVersionCommand.txt (used for testing) with the current version
 configure_file(cmake/referenceVersionCommand.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceVersionCommand.txt")
-
 configure_file(cmake/referenceReadRegisterCommand.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceReadRegisterCommand.txt")
+configure_file(cmake/referenceTestDMap.txt.in
+  "${PROJECT_BINARY_DIR}/referenceTexts/referenceTestDMap.txt")
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
@@ -123,6 +124,15 @@ ENDMACRO( ADD_SCRIPTS_AS_TESTS )
 ##################### END MACRO DEFENITIONS #####################################
 
 COPY_CONTENT_TO_BUILD_DIR("tests/referenceTexts;tests/scripts")
+
+# special files for dmap testing:
+# No dmap in directory, just map file
+FILE(COPY tests/dMapFiles/mtcadummy.map DESTINATION ${PROJECT_BINARY_DIR}/testNoDmapFile)
+# Two dmap files. Copy everything, than the map file again
+FILE(COPY tests/dMapFiles/ DESTINATION ${PROJECT_BINARY_DIR}/testTwoDmapFilesBroken)
+configure_file(tests/dMapFiles/dummies.dmap ${PROJECT_BINARY_DIR}/testTwoDmapFilesBroken/second.dmap)
+FILE(COPY tests/dMapFiles/ DESTINATION ${PROJECT_BINARY_DIR}/testTwoDmapFilesOk)
+configure_file(tests/dMapFiles/dummies.dmap ${PROJECT_BINARY_DIR}/testTwoDmapFilesOk/CommandLineTools.dmap)
 
 # Not copying the dmap files to its own sub directory, as the
 # mtca4u  executable currently requires the dMap file to be present in the

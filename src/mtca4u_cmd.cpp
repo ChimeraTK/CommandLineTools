@@ -223,12 +223,19 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/ []) {
  *
  */
 void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
-  cout << endl << "Available devices: " << endl << endl;
-  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
 
   auto dmapFileName = findDMapFile();
+
+  if (dmapFileName.empty()){
+    cout << "No dmap file found. No device information available." << endl;
+    return;
+  }
+  
   ChimeraTK::setDMapFilePath(dmapFileName);
   auto deviceInfoMap = DMapFileParser().parse(dmapFileName);
+
+  cout << endl << "Available devices: " << endl << endl;
+  cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << endl;
 
   for(auto& deviceInfo : *deviceInfoMap) {
     cout << deviceInfo.deviceName << "\t" << deviceInfo.uri

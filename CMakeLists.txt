@@ -5,13 +5,14 @@ project(CommandLineTools)
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
 set(${PROJECT_NAME}_MINOR_VERSION 15)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
-set(${PROJECT_NAME}_VERSION
-  ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
-#Note: We need the so-version because we treat it like a library, with version number in the executable name
-set(${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION})
+
+include(cmake/set_version_numbers.cmake)
+
+include(cmake/add_dependency.cmake)
 
 set(ChimeraTK-DeviceAccess_MIN_VERSION 01.01)
-FIND_PACKAGE(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
+
+add_dependency(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
 
 #use -DCMAKE_BUILD_TYPE=Debug when configuring to turn on the coverage tests (and debug symbols)
@@ -22,24 +23,19 @@ if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "None")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING
       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
-endif(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "None")
+endif()
 
 #set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
 #skip -Weffc++ for the moment. It gives too many false positives
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ChimeraTK-DeviceAccess_CXX_FLAGS} -Wall -fPIC -Wextra -Wshadow -pedantic -Wuninitialized")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -pedantic -Wuninitialized")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-FIND_PACKAGE(Boost COMPONENTS system filesystem)
-#The boost header-only development files are required
-FIND_PACKAGE(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+add_dependency(Boost COMPONENTS system filesystem REQUIRED)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
 #put the version number into the version file and add the include directory in the build tree, where we put it
 configure_file(cmake/version.h.in
   "${PROJECT_BINARY_DIR}/include/version.h" @ONLY)
-include_directories(${PROJECT_BINARY_DIR}/include)
 
 # update revferenceVersionCommand.txt (used for testing) with the current version
 configure_file(cmake/referenceVersionCommand.txt.in
@@ -50,8 +46,10 @@ configure_file(cmake/referenceTestDMap.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceTestDMap.txt")
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
+target_include_directories(mtca4u PRIVATE include ${PROJECT_BINARY_DIR}/include)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
 set_target_properties(mtca4u PROPERTIES LINK_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
+set_target_properties(mtca4u PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARIES})
 
 #change the install prefix to the source directory in case the user has not specified a destination
@@ -59,7 +57,7 @@ target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARI
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR} CACHE PATH "Install directory
                  prefix" FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+ENDIF()
 
 #Install the library and the executables
 install(TARGETS mtca4u
@@ -77,7 +75,7 @@ MACRO (COPY_CONTENT_TO_BUILD_DIR directories)
     foreach( directory ${directories} )
         SETUP_CONTENT_IN_BUILD_DIRECTORY( "${directory}" )
     endforeach( directory )
-ENDMACRO(COPY_CONTENT_TO_BUILD_DIR)
+ENDMACRO()
 
 
 
@@ -95,7 +93,7 @@ MACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY directory )
     set(target_directory "${PROJECT_BINARY_DIR}/${parent_directory}")
     file( MAKE_DIRECTORY "${target_directory}" )
     COPY_SOURCE_TO_TARGET( ${source_directory} ${target_directory} )
-ENDMACRO( SETUP_CONTENT_IN_BUILD_DIRECTORY )
+ENDMACRO()
 
 
 # The macro currently filters out the editor back up files that end with ~ .
@@ -112,14 +110,14 @@ MACRO( COPY_SOURCE_TO_TARGET source_directory target_directory)
     foreach( file ${list_of_files_to_copy} )
         FILE( COPY ${file} DESTINATION ${target_directory} )
     endforeach( file )
-ENDMACRO( COPY_SOURCE_TO_TARGET )
+ENDMACRO()
 
 MACRO( ADD_SCRIPTS_AS_TESTS list_of_script_files )
     foreach( script_path ${list_of_script_files} )
         get_filename_component(test_name ${script_path} NAME_WE)
         add_test( ${test_name} ${script_path} )
     endforeach( script_path )
-ENDMACRO( ADD_SCRIPTS_AS_TESTS )
+ENDMACRO()
 
 ##################### END MACRO DEFENITIONS #####################################
 
@@ -148,20 +146,7 @@ FILE(GLOB location_of_script_files
     "${PROJECT_BINARY_DIR}/scripts/*.sh")
 ADD_SCRIPTS_AS_TESTS( "${location_of_script_files}" )
 
-
-#
-# Enable code coverage when cmake build configured -DCMAKE_BUILD_TYPE=Debug.
-# lcov gets run by the target defined in Makefile.coverage
-IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  CONFIGURE_FILE(cmake/Makefile.coverage.in
-    ${PROJECT_BINARY_DIR}/Makefile.coverage @ONLY)
-  ADD_CUSTOM_TARGET(coverage
-    make -f Makefile.coverage
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating test coverage documentation" VERBATIM
-  )
-ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
+include(cmake/enable_code_coverage_report.cmake)
 
 # The instructions to create a debian package are loaded from a separate file
-include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)
+include(cmake/prepare_debian_package.cmake)

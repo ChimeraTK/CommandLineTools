@@ -10,7 +10,7 @@ include(cmake/set_version_numbers.cmake)
 
 include(cmake/add_dependency.cmake)
 
-set(ChimeraTK-DeviceAccess_MIN_VERSION 01.01)
+set(ChimeraTK-DeviceAccess_MIN_VERSION 01.02)
 
 add_dependency(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})

@@ -41,7 +41,7 @@ read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA
 324
 361
 read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 19
-Reqested dma size is too small
+0
 read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 0
 1

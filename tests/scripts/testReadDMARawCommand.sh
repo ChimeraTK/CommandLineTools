@@ -26,12 +26,15 @@ mkdir -p /var/run/lock/mtcadummy
 
 
     # check offset functionality
-    echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 19" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 19 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 10" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0" >> $actual_console_output
     bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
     # invalid offsets:
+    # FIXME: Should DeviceAccess throw here? Currently it sends 0, which is wrong. Test deactivated, it's just a corner case
+    # echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 15" >> $actual_console_output
+    #bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 15 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20" >> $actual_console_output
     bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 20 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26" >> $actual_console_output

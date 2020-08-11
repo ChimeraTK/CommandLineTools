@@ -15,21 +15,9 @@ set(ChimeraTK-DeviceAccess_MIN_VERSION 01.04)
 add_dependency(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
 
-#use -DCMAKE_BUILD_TYPE=Debug when configuring to turn on the coverage tests (and debug symbols)
 
-# Set the build type to Release if none is specified
-# Force it into Release if "None" is specified (needed to overrule dkpg_buildpackage)
-if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "None")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-      "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-endif()
-
-#set(CMAKE_CXX_FLAGS "-Wall -g -fPIC -Wextra -Wshadow -Weffc++ -pedantic -Wuninitialized")
-#skip -Weffc++ for the moment. It gives too many false positives
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -pedantic -Wuninitialized")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 --coverage")
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(cmake/set_default_build_to_release.cmake)
+include(cmake/set_default_flags.cmake)
 
 add_dependency(Boost COMPONENTS system filesystem REQUIRED)
 

@@ -73,11 +73,11 @@ read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 324
 361
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20
-Requested offset exceeds the size of the register'/AREA_MULTIPLEXED_SEQUENCE_DMA'!
+Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26
-Requested offset exceeds the size of the register'/AREA_MULTIPLEXED_SEQUENCE_DMA'!
+Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
 invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: -5
-Requested offset exceeds the size of the register'/AREA_MULTIPLEXED_SEQUENCE_DMA'!
+Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
 read_dma_raw first 10 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
 0
 1

@@ -39,7 +39,7 @@ mkdir -p /var/run/lock/mtcadummy
     # Good offset
     echo "Writing 2 elements to WORD_CLK_MUX from offset 2" >> $actual_console_output 2>&1 
     $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX 78$'\t'28 2 >> $actual_console_output 2>&1
-    bash -c '$0 read DUMMY1 "" WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output
+    bash -c '$0 read DUMMY1 "" WORD_CLK_MUX 2 2 >> $1  2>&1' $mtca4u_executable $actual_console_output
 
     # Give a bad offset
     echo "Writing 1 element to WORD_CLK_MUX from offset 4 <- invalid offset" >> $actual_console_output 2>&1 

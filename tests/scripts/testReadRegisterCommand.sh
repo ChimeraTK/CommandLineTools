@@ -49,7 +49,7 @@ mkdir -p /var/run/lock/mtcadummy
 
     # read with offset - valid/invalid
     echo "read WORD_CLK_MUX from offset 2" >> $actual_console_output
-    bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 2 2 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     # invalid: offset, but full register length 
     bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX 2 4 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "read WORD_CLK_MUX from offset 0" >> $actual_console_output

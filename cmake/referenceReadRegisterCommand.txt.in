@@ -70,11 +70,11 @@ read WORD_CLK_MUX from offset 0
 9.00000000e+00
 1.00000000e+01
 invalid WORD_CLK_MUX offset: 4
-Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 invalid WORD_CLK_MUX offset: 5
-Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 invalid WORD_CLK_MUX offset: -5 this is treated as uint and hence data bigger than reg size
-Requested offset exceeds the size of the register'/WORD_CLK_MUX'!
+Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
 read first 4 Elem from WORD_CLK_MUX
 7.00000000e+00
 8.00000000e+00

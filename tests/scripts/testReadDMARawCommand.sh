@@ -27,7 +27,7 @@ mkdir -p /var/run/lock/mtcadummy
 
     # check offset functionality
     echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 10" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 10 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0" >> $actual_console_output
     bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
@@ -36,11 +36,11 @@ mkdir -p /var/run/lock/mtcadummy
     # echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 15" >> $actual_console_output
     #bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 15 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 20 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 20 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 21 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 21 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: -5" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA -5 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA -5 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 
     # read_dma_raw with offset, [numelem - valid]

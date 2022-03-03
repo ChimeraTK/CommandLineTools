@@ -1,5 +1,5 @@
 Writing to a bad register NAme
-Register '/SOME_NON_EXISTENT_REGISTER' was not found in the catalogue.
+BackendRegisterCatalogue::getRegister(): Register '/SOME_NON_EXISTENT_REGISTER' does not exist.
 Writing to register without module
 7.80000000e+01
 2.80000000e+01

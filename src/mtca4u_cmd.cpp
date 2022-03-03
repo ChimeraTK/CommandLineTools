@@ -10,6 +10,7 @@
 #include <ChimeraTK/DMapFileParser.h>
 #include <ChimeraTK/OneDRegisterAccessor.h>
 #include <ChimeraTK/TwoDRegisterAccessor.h>
+#include <ChimeraTK/NumericAddressedRegisterCatalogue.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -21,11 +22,6 @@ using namespace std;
 
 // typedefs and Functions declarations
 typedef TwoDRegisterAccessor<double> dma_Accessor_t;
-
-// typedef boost::shared_ptr<Device<DummyBackend>::RegisterAccessor>
-// RegisterAccessor_t;
-typedef boost::shared_ptr<Device::RegisterAccessor> RegisterAccessor_t;
-typedef ChimeraTK::RegisterInfoMap::RegisterInfo RegisterInfo_t;
 
 boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName, const string& dmapFileName);
 dma_Accessor_t createOpenedMuxDataAccesor(const string& deviceName, const string& module, const string& regionName);
@@ -148,13 +144,14 @@ std::string findDMapFile() {
   }
   if(dmapFileNames.size() > 1) {
     // search for a file named CommandLineTools.dmap and return it. Only throw if not found.
-    for (auto dmapFileName : dmapFileNames){
-      if (dmapFileName.stem() == "CommandLineTools"){
+    for(auto dmapFileName : dmapFileNames) {
+      if(dmapFileName.stem() == "CommandLineTools") {
         return dmapFileName.string();
       }
     }
-    
-    throw ChimeraTK::logic_error("Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a symlink) so I know which one to take.");
+
+    throw ChimeraTK::logic_error("Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a "
+                                 "symlink) so I know which one to take.");
   }
 
   return dmapFileNames.front().string();
@@ -200,7 +197,7 @@ boost::shared_ptr<ChimeraTK::Device> getDevice(const string& deviceName) {
  * @param[in] argv Pointer to additional parameter
  *
  */
-void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ []) {
+void PrintHelp(unsigned int /*argc*/, const char* /*argv*/[]) {
   cout << endl << "mtca4u command line tools, version " << command_line_tools::VERSION << "\n" << endl;
   cout << "Available commands are:" << endl << endl;
 
@@ -217,7 +214,7 @@ void PrintHelp(unsigned int /*argc*/, const char* /*argv*/ []) {
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getVersion(unsigned int /*argc*/, const char* /*argv*/ []) {
+void getVersion(unsigned int /*argc*/, const char* /*argv*/[]) {
   cout << command_line_tools::VERSION << std::endl;
 }
 
@@ -228,15 +225,14 @@ void getVersion(unsigned int /*argc*/, const char* /*argv*/ []) {
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
-
+void getInfo(unsigned int /*argc*/, const char* /*argv*/[]) {
   auto dmapFileName = findDMapFile();
 
-  if (dmapFileName.empty()){
+  if(dmapFileName.empty()) {
     cout << "No dmap file found. No device information available." << endl;
     return;
   }
-  
+
   ChimeraTK::setDMapFilePath(dmapFileName);
   auto deviceInfoMap = DMapFileParser().parse(dmapFileName);
 
@@ -257,18 +253,6 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/ []) {
          << "na" << endl;
   }
   cout << endl;
-}
-
-/** Print the module and register name.
- *  Just a helper function to avoid duplicate code and if/then/elses
- */
-void printModuleRegisterName(ChimeraTK::RegisterInfoMap::RegisterInfo const& registerInfo) {
-  if(registerInfo.module.empty()) {
-    cout << registerInfo.name.c_str() << "\t";
-  }
-  else {
-    cout << registerInfo.module << "." << registerInfo.name.c_str() << "\t";
-  }
 }
 
 /**
@@ -295,10 +279,11 @@ void getDeviceInfo(unsigned int argc, const char* argv[]) {
     }
     cout << reg.getRegisterName().getWithAltSeparator() << "\t";
     cout << reg.getNumberOfElements() << "\t\t";
-    auto* reg_casted = dynamic_cast<ChimeraTK::RegisterInfoMap::RegisterInfo*>(&reg);
+    auto* reg_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&reg);
     if(reg_casted) {
-      cout << reg_casted->signedFlag << "\t\t";
-      cout << reg_casted->width << "\t\t" << reg_casted->nFractionalBits << "\t\t\t "; // ToDo: Add Description
+      // ToDo: Add Description and handle multiple channels properly
+      cout << reg_casted->channels.front().signedFlag << "\t\t";
+      cout << reg_casted->channels.front().width << "\t\t" << reg_casted->channels.front().nFractionalBits << "\t\t\t ";
     }
     cout << endl;
   }
@@ -331,13 +316,14 @@ void getRegisterInfo(unsigned int argc, const char* argv[]) {
   auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
 
   cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << endl;
-  cout << regInfo->getRegisterName().getWithAltSeparator() << "\t" << regInfo->getNumberOfElements();
+  cout << regInfo.getRegisterName().getWithAltSeparator() << "\t" << regInfo.getNumberOfElements();
 
-  auto* regInfo_casted = dynamic_cast<ChimeraTK::RegisterInfoMap::RegisterInfo*>(regInfo.get());
+  auto* regInfo_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&regInfo.getImpl());
   if(regInfo_casted) {
-    cout << "\t\t" << regInfo_casted->signedFlag << "\t\t";
-    cout << regInfo_casted->width << "\t\t" << regInfo_casted->nFractionalBits << "\t\t\t"
-         << " " << endl; // ToDo: Add Description
+    // ToDo: Add Description and handle multiple channels properly
+    cout << "\t\t" << regInfo_casted->channels.front().signedFlag << "\t\t";
+    cout << regInfo_casted->channels.front().width << "\t\t" << regInfo_casted->channels.front().nFractionalBits
+         << "\t\t\t " << endl;
   }
 }
 
@@ -357,7 +343,7 @@ void getRegisterSize(unsigned int argc, const char* argv[]) {
 
   auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
 
-  cout << regInfo->getNumberOfElements() << std::endl;
+  cout << regInfo.getNumberOfElements() << std::endl;
 }
 
 /**

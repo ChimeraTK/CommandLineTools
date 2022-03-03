@@ -19,7 +19,7 @@ read_dma_raw DMA region - AREA_DMA_VIA_DMA
 289
 324
 361
-read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA
+read_dma_raw DMA region - DMA.MULTIPLEXED_RAW
 0
 1
 4
@@ -40,7 +40,7 @@ read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA
 289
 324
 361
-read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 10
+read_dma_raw DMA.MULTIPLEXED_RAW from offset 10
 100
 121
 144
@@ -51,7 +51,7 @@ read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 10
 289
 324
 361
-read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
+read_dma_raw DMA.MULTIPLEXED_RAW from offset 0
 0
 1
 4
@@ -72,13 +72,13 @@ read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0
 289
 324
 361
-invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20
-Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
-invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26
-Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
-invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: -5
-Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
-read_dma_raw first 10 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
+invalid DMA.MULTIPLEXED_RAW offset: 20
+Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+invalid DMA.MULTIPLEXED_RAW: 26
+Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+invalid DMA.MULTIPLEXED_RAW offset: -5
+Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+read_dma_raw first 10 Elem from DMA.MULTIPLEXED_RAW
 0
 1
 4
@@ -89,7 +89,7 @@ read_dma_raw first 10 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
 49
 64
 81
-read_dma_raw 0 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
+read_dma_raw 0 Elem from DMA.MULTIPLEXED_RAW
 0
 1
 4
@@ -110,10 +110,10 @@ read_dma_raw 0 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA
 289
 324
 361
-read_dma_raw first 26 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case
-Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
-read_dma_raw first -5 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case
-Requested number of words exceeds the size of the register '/AREA_MULTIPLEXED_SEQUENCE_DMA'!
+read_dma_raw first 26 Elem from DMA.MULTIPLEXED_RAW <- invalid case
+Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+read_dma_raw first -5 Elem from DMA.MULTIPLEXED_RAW <- invalid case
+Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
 hex representation for Raw Value
 0
 1

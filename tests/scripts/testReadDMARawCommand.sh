@@ -21,48 +21,48 @@ mkdir -p /var/run/lock/mtcadummy
     # Normal read_dma_raw to a DMA region
     echo "read_dma_raw DMA region - AREA_DMA_VIA_DMA" >> $actual_console_output 
     bash -c '$0 read_dma_raw DUMMY1 ""  AREA_DMA_VIA_DMA 0 20 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "read_dma_raw DMA region - AREA_MULTIPLEXED_SEQUENCE_DMA" >> $actual_console_output 
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw DMA region - DMA.MULTIPLEXED_RAW" >> $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 
     # check offset functionality
-    echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 10" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 10 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 0" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw DMA.MULTIPLEXED_RAW from offset 10" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 10 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw DMA.MULTIPLEXED_RAW from offset 0" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 0 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
     # invalid offsets:
     # FIXME: Should DeviceAccess throw here? Currently it sends 0, which is wrong. Test deactivated, it's just a corner case
-    # echo "read_dma_raw AREA_MULTIPLEXED_SEQUENCE_DMA from offset 15" >> $actual_console_output
-    #bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 15 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: 20" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 20 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA: 26" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 21 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "invalid AREA_MULTIPLEXED_SEQUENCE_DMA offset: -5" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA -5 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    # echo "read_dma_raw DMA.MULTIPLEXED_RAW from offset 15" >> $actual_console_output
+    #bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 15 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "invalid DMA.MULTIPLEXED_RAW offset: 20" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 20 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "invalid DMA.MULTIPLEXED_RAW: 26" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 21 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "invalid DMA.MULTIPLEXED_RAW offset: -5" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW -5 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 
     # read_dma_raw with offset, [numelem - valid]
     # read_dma_raw with offset, [numelem - invalid]
-    echo "read_dma_raw first 10 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "read_dma_raw 0 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 0 >> $1  2>&1' $mtca4u_executable $actual_console_output
-    echo "read_dma_raw first 26 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 3 26 >> $1  2>&1' $mtca4u_executable $actual_console_output 
-    echo "read_dma_raw first -5 Elem from AREA_MULTIPLEXED_SEQUENCE_DMA <- invalid case" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 3 -5 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw first 10 Elem from DMA.MULTIPLEXED_RAW" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 0 10 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw 0 Elem from DMA.MULTIPLEXED_RAW" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 0 0 >> $1  2>&1' $mtca4u_executable $actual_console_output
+    echo "read_dma_raw first 26 Elem from DMA.MULTIPLEXED_RAW <- invalid case" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 3 26 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    echo "read_dma_raw first -5 Elem from DMA.MULTIPLEXED_RAW <- invalid case" >> $actual_console_output
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 3 -5 >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 
     # read_dma_raw - hexrepresentation for raw 
     # read_dma_raw - uint representation for raw
     echo "hex representation for Raw Value" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 20 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 0 20 hex >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "uint representation for Raw Value" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 ""  AREA_MULTIPLEXED_SEQUENCE_DMA 0 20 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 ""  DMA.MULTIPLEXED_RAW 0 20 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
     echo "uint representation for Raw Value when num elem is 0 -> This was causing aseg fault before" >> $actual_console_output
-    bash -c '$0 read_dma_raw DUMMY1 "" AREA_MULTIPLEXED_SEQUENCE_DMA 0 0 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_dma_raw DUMMY1 "" DMA.MULTIPLEXED_RAW 0 0 raw >> $1  2>&1' $mtca4u_executable $actual_console_output 
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
@@ -73,10 +73,10 @@ bash -c '$0 read_dma_raw DUMMY2 "" >> $1  2>&1' $mtca4u_executable $actual_conso
 
 # bad parameters
 echo "bad num elements" >> $actual_console_output
-$mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" 1 hsg >> $actual_console_output 2>&1
+$mtca4u_executable read_dma_raw  DUMMY1 "" "DMA.MULTIPLEXED_RAW" 1 hsg >> $actual_console_output 2>&1
 echo "bad offset Value" >> $actual_console_output
-$mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" hj  >> $actual_console_output 2>&1
+$mtca4u_executable read_dma_raw  DUMMY1 "" "DMA.MULTIPLEXED_RAW" hj  >> $actual_console_output 2>&1
 echo "bad display mode" >> $actual_console_output
-$mtca4u_executable read_dma_raw  DUMMY1 "" "AREA_MULTIPLEXED_SEQUENCE_DMA" 0 20 invalid_dispaly_option >> $actual_console_output 2>&1
+$mtca4u_executable read_dma_raw  DUMMY1 "" "DMA.MULTIPLEXED_RAW" 0 20 invalid_dispaly_option >> $actual_console_output 2>&1
 
 diff $actual_console_output $expected_console_output

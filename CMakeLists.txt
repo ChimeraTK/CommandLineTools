@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 2.8.0)
 project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
-set(${PROJECT_NAME}_MINOR_VERSION 15)
-set(${PROJECT_NAME}_PATCH_VERSION 01)
+set(${PROJECT_NAME}_MINOR_VERSION 16)
+set(${PROJECT_NAME}_PATCH_VERSION 00)
 
 include(cmake/set_version_numbers.cmake)
 
 include(cmake/add_dependency.cmake)
 
-set(ChimeraTK-DeviceAccess_MIN_VERSION 01.04)
+set(ChimeraTK-DeviceAccess_MIN_VERSION 03.00)
 
 add_dependency(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})

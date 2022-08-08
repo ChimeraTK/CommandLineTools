@@ -69,7 +69,7 @@ mkdir -p /var/run/lock/mtcadummy
     # Not using dmap and map file, but sdm uri / cdd and numerical address
     # We keep using the  WORD_CLK_MUX register at address 0x20 = 32
     # Just one argument
-    $mtca4u_executable write sdm://./pci:mtcadummys0 "" "#/0/32" 23 >> $actual_console_output 2>&1
+    $mtca4u_executable write "(pci:mtcadummys0)" "" "#/0/32" 23 >> $actual_console_output 2>&1
     bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX >> $1  2>&1' $mtca4u_executable $actual_console_output 
     #with offset
     $mtca4u_executable write "(pci:mtcadummys0)" "" "#/0/32*16" 26 1 >> $actual_console_output 2>&1
@@ -79,11 +79,11 @@ mkdir -p /var/run/lock/mtcadummy
     bash -c '$0 read DUMMY1 ""  WORD_CLK_MUX >> $1  2>&1' $mtca4u_executable $actual_console_output 
     # some errors:
     echo "too many values for register" >> $actual_console_output 2>&1 
-    $mtca4u_executable write sdm://./pci:mtcadummys0 "" "#/0/32*8" 327$'\t'34$'\t'35 >> $actual_console_output 2>&1
+    $mtca4u_executable write "(pci:mtcadummys0)" "" "#/0/32*8" 327$'\t'34$'\t'35 >> $actual_console_output 2>&1
     echo "too many values for this offset" >> $actual_console_output 2>&1 
     $mtca4u_executable write "(pci:mtcadummys0)" "" "#/0/32*16" 327$'\t'34$'\t'35 2 >> $actual_console_output 2>&1
     echo "offset too large" >> $actual_console_output 2>&1 
-    $mtca4u_executable write sdm://./pci:mtcadummys0 "" "#/0/32*8" 32 2 >> $actual_console_output 2>&1
+    $mtca4u_executable write "(pci:mtcadummys0)" "" "#/0/32*8" 32 2 >> $actual_console_output 2>&1
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 

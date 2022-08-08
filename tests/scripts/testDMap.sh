@@ -19,9 +19,6 @@ mkdir -p /var/run/lock/mtcadummy
       #using cdd works
       echo Testing CDD >> ${actual_console_output}
       ${mtca4u_executable} read "(pci:mtcadummys0?map=mtcadummy.map)" ADC WORD_CLK_DUMMY 0 0 hex >> ${actual_console_output} 2>&1
-      #using sdm (still) works
-      echo Testing sdm >> ${actual_console_output}
-      ${mtca4u_executable} read "sdm://./pci:mtcadummys0=mtcadummy.map" ADC WORD_CLK_DUMMY 0 0 hex >> ${actual_console_output} 2>&1
       #alias alias does not work
       echo Testing alias >> ${actual_console_output}
       ${mtca4u_executable} read DUMMY1 "" WORD_CLK_DUMMY 0 0 hex >> ${actual_console_output} 2>&1

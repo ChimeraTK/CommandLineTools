@@ -30,8 +30,6 @@ configure_file(cmake/referenceVersionCommand.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceVersionCommand.txt")
 configure_file(cmake/referenceReadRegisterCommand.txt.in
   "${PROJECT_BINARY_DIR}/referenceTexts/referenceReadRegisterCommand.txt")
-configure_file(cmake/referenceTestDMap.txt.in
-  "${PROJECT_BINARY_DIR}/referenceTexts/referenceTestDMap.txt")
 
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 target_include_directories(mtca4u PRIVATE include ${PROJECT_BINARY_DIR}/include)

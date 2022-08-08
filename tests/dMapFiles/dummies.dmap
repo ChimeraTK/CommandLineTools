@@ -1,6 +1,6 @@
-DUMMY1   sdm://./pci:mtcadummys0 ./mtcadummy_withoutModules.map
+DUMMY1   (pci:mtcadummys0?map=mtcadummy_withoutModules.map)
 DUMMY2   (pci:mtcadummys1?map=mtcadummy.map)
-DUMMY3   sdm://./pci:mtcadummys2=mtcadummy_bad.map
-DUMMY4   sdm://./pci:mtcadummys3 ./mtcadummy_bad.map
-DUMMY5   sdm://./pci:llrfdummys4 ./mtcadummy.map
+DUMMY3   (pci:mtcadummys2?map=mtcadummy_bad.map)
+DUMMY4   (pci:mtcadummys3?map=mtcadummy_bad.map)
+DUMMY5   (pci:llrfdummys4?map=mtcadummy.map)
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.0)
+cmake_minimum_required(VERSION 3.16)
 
 project(CommandLineTools)
 
@@ -8,17 +8,13 @@ set(${PROJECT_NAME}_PATCH_VERSION 01)
 
 include(cmake/set_version_numbers.cmake)
 
-include(cmake/add_dependency.cmake)
-
-set(ChimeraTK-DeviceAccess_MIN_VERSION 03.00)
-
-add_dependency(ChimeraTK-DeviceAccess ${ChimeraTK-DeviceAccess_MIN_VERSION} REQUIRED)
+find_package(ChimeraTK-DeviceAccess 03.18 REQUIRED)
 include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
 
 include(cmake/set_default_build_to_release.cmake)
 include(cmake/set_default_flags.cmake)
 
-add_dependency(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 # put the version number into the version file and add the include directory in the build tree, where we put it
 configure_file(cmake/version.h.in

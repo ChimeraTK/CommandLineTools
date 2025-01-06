@@ -73,11 +73,11 @@ read_dma_raw DMA.MULTIPLEXED_RAW from offset 0
 324
 361
 invalid DMA.MULTIPLEXED_RAW offset: 20
-Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+Requested number of words (1 + 20) exceeds the size (20) of the register '/DMA.MULTIPLEXED_RAW'!
 invalid DMA.MULTIPLEXED_RAW: 26
-Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+Requested number of words (1 + 21) exceeds the size (20) of the register '/DMA.MULTIPLEXED_RAW'!
 invalid DMA.MULTIPLEXED_RAW offset: -5
-Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+Requested number of words (1 + 4294967291) exceeds the size (20) of the register '/DMA.MULTIPLEXED_RAW'!
 read_dma_raw first 10 Elem from DMA.MULTIPLEXED_RAW
 0
 1
@@ -111,9 +111,9 @@ read_dma_raw 0 Elem from DMA.MULTIPLEXED_RAW
 324
 361
 read_dma_raw first 26 Elem from DMA.MULTIPLEXED_RAW <- invalid case
-Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+Requested number of words (26 + 3) exceeds the size (20) of the register '/DMA.MULTIPLEXED_RAW'!
 read_dma_raw first -5 Elem from DMA.MULTIPLEXED_RAW <- invalid case
-Requested number of words exceeds the size of the register '/DMA.MULTIPLEXED_RAW'!
+Requested number of words (4294967291 + 3) exceeds the size (20) of the register '/DMA.MULTIPLEXED_RAW'!
 hex representation for Raw Value
 0
 1

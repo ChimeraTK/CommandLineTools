@@ -11,20 +11,20 @@ Writing to register with module
 1.10000000e+01
 1.44000000e+02
 Writing 5 elements to WORD_CLK_MUX (which is 4 elements long)
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (5 + 0) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 Writing 6 elements to WORD_CLK_MUX (which is 4 elements long)
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (5 + 0) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 Writing 2 elements to WORD_CLK_MUX from offset 2
 7.80000000e+01
 2.80000000e+01
 Writing 1 element to WORD_CLK_MUX from offset 4 <- invalid offset
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (1 + 4) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 Writing 1 element to WORD_CLK_MUX from offset 5 <- invalid offset
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (1 + 5) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 Writing 1 element to WORD_CLK_MUX from offset 6 <- invalid offset
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (1 + 6) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 Writing 1 element to WORD_CLK_MUX from offset -5 <- invalid offset
-Requested number of words exceeds the size of the register '/WORD_CLK_MUX'!
+Requested number of words (1 + 4294967291) exceeds the size (4) of the register '/WORD_CLK_MUX'!
 invoke command with bad values
 Could not convert parameter to double.
 Could not convert parameter to double.
@@ -45,8 +45,8 @@ Not enough input arguments.
 3.40000000e+01
 2.80000000e+01
 too many values for register
-Requested number of words exceeds the size of the register '/#/0/32*8'!
+Requested number of words (3 + 0) exceeds the size (2) of the register '/#/0/32*8'!
 too many values for this offset
-Requested number of words exceeds the size of the register '/#/0/32*16'!
+Requested number of words (3 + 2) exceeds the size (4) of the register '/#/0/32*16'!
 offset too large
-Requested number of words exceeds the size of the register '/#/0/32*8'!
+Requested number of words (1 + 2) exceeds the size (2) of the register '/#/0/32*8'!

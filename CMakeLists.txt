@@ -9,7 +9,6 @@ set(${PROJECT_NAME}_PATCH_VERSION 01)
 include(cmake/set_version_numbers.cmake)
 
 find_package(ChimeraTK-DeviceAccess 03.18 REQUIRED)
-include_directories(${ChimeraTK-DeviceAccess_INCLUDE_DIRS})
 
 include(cmake/set_default_build_to_release.cmake)
 include(cmake/set_default_flags.cmake)
@@ -31,7 +30,7 @@ target_include_directories(mtca4u PRIVATE include ${PROJECT_BINARY_DIR}/include)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
 set_target_properties(mtca4u PROPERTIES LINK_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
 set_target_properties(mtca4u PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(mtca4u ${ChimeraTK-DeviceAccess_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(mtca4u ChimeraTK::ChimeraTK-DeviceAccess ${Boost_LIBRARIES})
 
 # change the install prefix to the source directory in case the user has not specified a destination
 # i. e. CMAKE_INSTALL_PREFIX is not set manually

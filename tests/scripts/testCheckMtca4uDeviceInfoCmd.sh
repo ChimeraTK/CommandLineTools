@@ -12,11 +12,11 @@ mkdir -p /var/run/lock/mtcadummy
   # print out device info for a card without modules
   echo "Device Info for card without modules" > $actual_console_output  2>&1
   $mtca4u_executable device_info DUMMY1 > $actual_console_output  2>&1 # redirect
-                                                 # both stderr and stdout to file 
-  if [ $? -ne 0 ] ; then # 0 is the exit 
+                                                 # both stderr and stdout to file
+  if [ $? -ne 0 ] ; then # 0 is the exit
                          # status for a successful command
       exit -1
-  fi 
+  fi
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
@@ -32,12 +32,10 @@ mkdir -p /var/run/lock/mtcadummy
 
 # Bad command structure
 echo "Device Info command called with incorrect number of parameters" >> $actual_console_output  2>&1
-$mtca4u_executable device_info >> $actual_console_output  2>&1 
-if [ $? -ne 1 ] ; then 
+$mtca4u_executable device_info >> $actual_console_output  2>&1
+if [ $? -ne 1 ] ; then
     exit -1
-fi 
+fi
 
-
-
-diff $actual_console_output $expected_console_output
-
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

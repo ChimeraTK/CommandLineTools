@@ -17,12 +17,12 @@ mkdir -p /var/run/lock/mtcadummy
 
   # Get Information from a card that has no modules described in its mapfile
   # DUMMY1 which uses mapfile ./mtcadummywithoutModules.map is such a board
-  # in case of such devices the module name parameter is represented by 
+  # in case of such devices the module name parameter is represented by
   # an empty string "" (<- indicating that register is not part of any module)
   bash -c '$0 register_info DUMMY1 ""  WORD_FIRMWARE > $1  2>&1' $mtca4u_executable $actual_console_output #<- This is actually a brittle thing find a better way to do things
   if [ $? -ne 0 ] ; then # 0 is the exit status for a successful command
       exit -1
-  fi 
+  fi
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
@@ -34,7 +34,7 @@ mkdir -p /var/run/lock/mtcadummy
   bash -c '$0 register_info DUMMY2 ADC  AREA_DMAABLE_FIXEDPOINT16_3 >> $1  2>&1' $mtca4u_executable $actual_console_output
   if [ $? -ne 0 ] ; then # 0 is the exit status for a successful command
       exit -1
-  fi 
+  fi
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys1
 
@@ -45,9 +45,9 @@ mtca4u_command="$mtca4u_executable register_info DUMMY1"
 $mtca4u_command >> $actual_console_output  2>&1 # redirect
 # This command is not successful; Error message gets printed to stderr, and
 # consequently return type is not 0
-if [ $? -ne 1 ] ; then 
+if [ $? -ne 1 ] ; then
     exit -1
-fi 
+fi
 
-diff $actual_console_output $expected_console_output
-
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

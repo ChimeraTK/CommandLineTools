@@ -12,7 +12,7 @@ mkdir -p /var/run/lock/mtcadummy
     bash -c '$0 register_size DUMMY1 "" WORD_FIRMWARE > $1 2>&1' $mtca4u_executable $actual_console_output
 
     if [ $? -ne 0 ]; then # will not be equal to 0 if abv bash command fails
-	    exit -1 # make the test case return a failure code if 
+	    exit -1 # make the test case return a failure code if
 	            # above bash command fails
     fi
 
@@ -23,7 +23,7 @@ mkdir -p /var/run/lock/mtcadummy
     bash -c '$0 register_size DUMMY2 ADC AREA_DMA_VIA_DMA >> $1 2>&1' $mtca4u_executable $actual_console_output
 
     if [ $? -ne 0 ]; then # will not be equal to 0 if abv bash command fails
-	    exit -1 # make the test case return a failure code if 
+	    exit -1 # make the test case return a failure code if
 	            # above bash command fails
     fi
 
@@ -36,4 +36,5 @@ mkdir -p /var/run/lock/mtcadummy
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys1
 
-diff $actual_console_output $expected_console_output
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

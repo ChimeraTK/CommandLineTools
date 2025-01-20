@@ -9,11 +9,11 @@ expected_console_output="./referenceTexts/referenceMtca4uInfo.txt"
 mtca4u_command="$mtca4u_executable info"
 
 $mtca4u_command > $actual_console_output  2>&1 # redirect
-                                               # both stderr and stdout to file 
-if [ $? -ne 0 ] ; then 
+                                               # both stderr and stdout to file
+if [ $? -ne 0 ] ; then
     exit -1
-fi 
+fi
 
 sed -r "{s|\t/.*/|\t./|}" -i $actual_console_output
-diff $actual_console_output $expected_console_output
-
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

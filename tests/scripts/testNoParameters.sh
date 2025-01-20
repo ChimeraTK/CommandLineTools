@@ -14,7 +14,7 @@ $mtca4u_command &> output.txt # Both stdout and stderr
                        # Revisit this piping once code is revised.
 if [ $? -ne 1 ] ; then
     exit -1
-fi 
+fi
 
 # we cannot pipe directly onto seed because otherwise the $? would give
 # the result of sed, not of mtca4u.
@@ -24,4 +24,5 @@ IRRELEVANT/}" > $actual_console_output
 #drop out if an error occurs
 set -e
 
-diff $actual_console_output $expected_console_output
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

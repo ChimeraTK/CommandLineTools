@@ -15,7 +15,7 @@ mkdir -p /var/run/lock/mtcadummy
       #test in a directory without dmap file
       cd ${TEST_BASE_DIR}/${TESTDIR}
       echo "*** Tests in ${TESTDIR} ***" >> ${actual_console_output}
-      
+
       #using cdd works
       echo Testing CDD >> ${actual_console_output}
       ${mtca4u_executable} read "(pci:mtcadummys0?map=mtcadummy.map)" ADC WORD_CLK_DUMMY 0 0 hex >> ${actual_console_output} 2>&1
@@ -31,4 +31,5 @@ mkdir -p /var/run/lock/mtcadummy
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
-diff $actual_console_output $expected_console_output
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

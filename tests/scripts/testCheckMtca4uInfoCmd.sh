@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # NOTE: Paths specified below, assume the working directory is the build
 # directory
@@ -8,11 +8,7 @@ expected_console_output="./referenceTexts/referenceMtca4uInfo.txt"
 
 mtca4u_command="$mtca4u_executable info"
 
-$mtca4u_command > $actual_console_output  2>&1 # redirect
-                                               # both stderr and stdout to file
-if [ $? -ne 0 ] ; then
-    exit -1
-fi
+$mtca4u_command &> $actual_console_output
 
 sed -r "{s|\t/.*/|\t./|}" -i $actual_console_output
 grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered

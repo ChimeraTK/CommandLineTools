@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 
 # command usage:
@@ -6,48 +6,38 @@
 # This prints out the map file informatoion for the register
 
 
-# NOTE: Paths specified below, assume the working directory is the build
-# directory
+# NOTE: Paths specified below, assume the working directory is the build directory
 mtca4u_executable=./mtca4u
 actual_console_output="./output_mtca4uRegInfo.txt"
 expected_console_output="./referenceTexts/referenceMtca4uRegInfo.txt"
 
-mkdir -p /var/run/lock/mtcadummy
-( flock 9 # lock for mtcadummys0
+{
 
-  # Get Information from a card that has no modules described in its mapfile
-  # DUMMY1 which uses mapfile ./mtcadummywithoutModules.map is such a board
-  # in case of such devices the module name parameter is represented by
-  # an empty string "" (<- indicating that register is not part of any module)
-  bash -c '$0 register_info DUMMY1 ""  WORD_FIRMWARE > $1  2>&1' $mtca4u_executable $actual_console_output #<- This is actually a brittle thing find a better way to do things
-  if [ $? -ne 0 ] ; then # 0 is the exit status for a successful command
-      exit -1
-  fi
+  mkdir -p /var/run/lock/mtcadummy
+  ( flock 9 # lock for mtcadummys0
 
-) 9>/var/run/lock/mtcadummy/mtcadummys0
+    # Get Information from a card that has no modules described in its mapfile
+    # DUMMY1 which uses mapfile ./mtcadummywithoutModules.map is such a board
+    # in case of such devices the module name parameter is represented by
+    # an empty string "" (<- indicating that register is not part of any module)
+    $mtca4u_executable register_info DUMMY1 "" WORD_FIRMWARE
 
-
-( flock 9 # lock for mtcadummys0
-
-  # log  displayed information for a register belonging to a module. DUMMY2 is a
-  # card that has modules in it (it is described by the mapfile mtcadummy.map)
-  bash -c '$0 register_info DUMMY2 ADC  AREA_DMAABLE_FIXEDPOINT16_3 >> $1  2>&1' $mtca4u_executable $actual_console_output
-  if [ $? -ne 0 ] ; then # 0 is the exit status for a successful command
-      exit -1
-  fi
-
-) 9>/var/run/lock/mtcadummy/mtcadummys1
+  ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
 
-# log display for invalid command syntax
+  ( flock 9 # lock for mtcadummys1
 
-mtca4u_command="$mtca4u_executable register_info DUMMY1"
-$mtca4u_command >> $actual_console_output  2>&1 # redirect
-# This command is not successful; Error message gets printed to stderr, and
-# consequently return type is not 0
-if [ $? -ne 1 ] ; then
-    exit -1
-fi
+    # log  displayed information for a register belonging to a module. DUMMY2 is a
+    # card that has modules in it (it is described by the mapfile mtcadummy.map)
+    $mtca4u_executable register_info DUMMY2 ADC AREA_DMAABLE_FIXEDPOINT16_3
+
+  ) 9>/var/run/lock/mtcadummy/mtcadummys1
+
+
+  # log display for invalid command syntax ("!" is used to invert the return code)
+  ! $mtca4u_executable register_info DUMMY1
+
+} &> $actual_console_output
 
 grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
 diff ${actual_console_output}-filtered $expected_console_output

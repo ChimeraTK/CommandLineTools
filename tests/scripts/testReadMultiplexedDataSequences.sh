@@ -3,7 +3,7 @@
 
 # command usage:
 # 'mtca4u read_dma <Board_name> <Module_name> <Register_name> [channel_number], [offset], [elements]'
-# 
+#
 
 
 # NOTE: Paths specified below, assume the working directory is the build
@@ -35,7 +35,7 @@ mkdir -p /var/run/lock/mtcadummy
     echo "reading from invalid offset  in seq# 1" >> $actual_console_output
     $mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 50 >> $actual_console_output 2>&1
 
-    # Elements more than register size with and without offset 
+    # Elements more than register size with and without offset
     echo "reading specific number of elemnts from seq# 1 offset 1" >> $actual_console_output
     $mtca4u_executable read_seq  DUMMY1 "" "DMA" 1 1 3 >> $actual_console_output 2>&1
 
@@ -55,7 +55,7 @@ mkdir -p /var/run/lock/mtcadummy
 
 
     echo "Using sequence list to print selected sequences (3, 2, 1) - offset = 2, numelements = 1" >> $actual_console_output
-    bash -c '$0 read_seq DUMMY1 ""  DMA "3 2 1" 2 1 >> $1  2>&1' $mtca4u_executable $actual_console_output 
+    bash -c '$0 read_seq DUMMY1 ""  DMA "3 2 1" 2 1 >> $1  2>&1' $mtca4u_executable $actual_console_output
 
     echo "Using sequence list bad seq num" >> $actual_console_output
     $mtca4u_executable read_seq  DUMMY1 "" DMA "3 12 1">> $actual_console_output 2>&1
@@ -69,5 +69,5 @@ mkdir -p /var/run/lock/mtcadummy
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
-diff $actual_console_output $expected_console_output
-
+grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+diff ${actual_console_output}-filtered $expected_console_output

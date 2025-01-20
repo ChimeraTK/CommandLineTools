@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # NOTE: Paths specified below, assume the working directory is the build
 # directory
@@ -6,36 +6,32 @@ mtca4u_executable=./mtca4u
 actual_console_output="./output_mtca4uDeviceInfo.txt"
 expected_console_output="./referenceTexts/referenceMtca4uDeviceInfo.txt"
 
-mkdir -p /var/run/lock/mtcadummy
-( flock 9 # lock for mtcadummys0
+{
 
-  # print out device info for a card without modules
-  echo "Device Info for card without modules" > $actual_console_output  2>&1
-  $mtca4u_executable device_info DUMMY1 > $actual_console_output  2>&1 # redirect
-                                                 # both stderr and stdout to file
-  if [ $? -ne 0 ] ; then # 0 is the exit
-                         # status for a successful command
-      exit -1
-  fi
+  mkdir -p /var/run/lock/mtcadummy
+  ( flock 9 # lock for mtcadummys0
 
-) 9>/var/run/lock/mtcadummy/mtcadummys0
+    # print out device info for a card without modules
+    echo "Device Info for card without modules"
+    $mtca4u_executable device_info DUMMY1
+
+  ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
 
-( flock 9 # lock for mtcadummys1
+  ( flock 9 # lock for mtcadummys1
 
-  # print out device info for a card with modules
-  echo "Device Info for card with modules" >> $actual_console_output  2>&1
-  $mtca4u_executable device_info DUMMY2 >> $actual_console_output  2>&1
+    # print out device info for a card with modules
+    echo "Device Info for card with modules"
+    $mtca4u_executable device_info DUMMY2
 
-) 9>/var/run/lock/mtcadummy/mtcadummys1
+  ) 9>/var/run/lock/mtcadummy/mtcadummys1
 
 
-# Bad command structure
-echo "Device Info command called with incorrect number of parameters" >> $actual_console_output  2>&1
-$mtca4u_executable device_info >> $actual_console_output  2>&1
-if [ $? -ne 1 ] ; then
-    exit -1
-fi
+  # Bad command structure ("!" is used to invert the return code)
+  echo "Device Info command called with incorrect number of parameters"
+  ! $mtca4u_executable device_info
+
+} &> $actual_console_output
 
 grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
 diff ${actual_console_output}-filtered $expected_console_output

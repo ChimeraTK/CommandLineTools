@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/bash -e
 
 if [ ! -e /dev/mtcadummys0 ] ; then
     echo Could not find device file. Make sure the mtcadummy driver is loaded.
-    exit -1
+    exit 1
 fi

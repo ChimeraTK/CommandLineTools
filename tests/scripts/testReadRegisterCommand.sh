@@ -19,12 +19,12 @@ expected_console_output="./referenceTexts/referenceReadRegisterCommand.txt"
 
       # write to the adc enable bit to set the values inside the dma region + populate multiword register
       # WORD_CLK_MUX
-      #---------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
       $mtca4u_executable write DUMMY1 ""  WORD_ADC_ENA 1
       $mtca4u_executable write DUMMY2 ADC  WORD_ADC_ENA 1
       $mtca4u_executable write  DUMMY1 "" WORD_CLK_MUX 7$'\t'8$'\t'9$'\t'10
       $mtca4u_executable write  DUMMY2 ADC WORD_CLK_MUX 11$'\t'12$'\t'13$'\t'14
-      #---------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
 
       # Read elements from AREA_DMAABLE register. If this works in returning the parabolic
       # values (provided card in a sanitized state), basic read works. Remaing tests

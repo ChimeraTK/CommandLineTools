@@ -16,7 +16,7 @@ expected_console_output="./referenceTexts/referenceReadDMARawCommand.txt"
     ( flock 9 # lock for mtcadummys0
 
         # write to the adc enable bit to set the parabolic values inside the dma region
-        #---------------------------------
+        #---------------------------------------------------------------------------------------------------------------
         $mtca4u_executable write DUMMY1 "" WORD_ADC_ENA 1
 
         # Normal read_dma_raw to a DMA region

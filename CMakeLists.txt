@@ -125,5 +125,3 @@ ADD_SCRIPTS_AS_TESTS("${location_of_script_files}")
 
 include(cmake/enable_code_coverage_report.cmake)
 
-# The instructions to create a debian package are loaded from a separate file
-include(cmake/prepare_debian_package.cmake)

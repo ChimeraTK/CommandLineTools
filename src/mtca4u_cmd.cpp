@@ -11,9 +11,10 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include <cstdlib>
-#include <limits>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -22,66 +23,45 @@
 // typedefs and Functions declarations
 using DmaAccessor = ChimeraTK::TwoDRegisterAccessor<double>;
 
+namespace po = boost::program_options;
+
 boost::shared_ptr<ChimeraTK::Device> getDevice(const std::string& deviceName, const std::string& dmapFileName);
 DmaAccessor createOpenedMuxDataAccesor(
     const std::string& deviceName, const std::string& module, const std::string& regionName);
 void printSeqList(const DmaAccessor& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
-std::vector<std::string> createArgList(uint argc, const char* argv[], uint maxArgs);
 std::vector<uint> extractSequenceList(std::string const& list, const DmaAccessor& deMuxedData, uint numSequences);
-uint extractOffset(std::string const& userEnteredOffset, uint maxOffset = std::numeric_limits<uint>::max());
-uint extractNumElements(
-    std::string const& userEnteredValue, uint offset, uint maxElements = std::numeric_limits<uint>::max());
-std::string extractDisplayMode(const std::string& displayMode);
 std::vector<uint> createListWithAllSequences(const DmaAccessor& deMuxedData);
 // converts a std::string to uint, catches and replaces the conversion exception, and
 // returns 0 if the std::string is empty
-uint stringToUIntWithZeroDefault(const std::string& userEnteredValue);
-void readRegisterInternal(const std::vector<std::string>& argList);
+void readRegisterInternal(const po::variables_map& args);
 
-using CmdFnc = std::function<void(unsigned int, const char**)>;
+using CmdFnc = std::function<void(po::variables_map& map)>;
 
 struct Command {
-  std::string name;
   CmdFnc callback;
   std::string description;
-  std::string example;
+  std::pair<po::options_description, po::positional_options_description> options;
+  std::optional<std::string> help;
 };
 
 /**********************************************************************************************************************/
 
-// Forward declarations of subcommands
-void printHelp(unsigned int, const char**);
-void getVersion(unsigned int, const char**);
-void getInfo(unsigned int, const char**);
-void getDeviceInfo(unsigned int, const char**);
-void getRegisterInfo(unsigned int, const char**);
-void getRegisterSize(unsigned int, const char**);
-void readRegister(unsigned int, const char**);
-void writeRegister(unsigned int, const char**);
-void readDmaRawData(unsigned int, const char**);
-void readMultiplexedData(unsigned int, const char**);
+// Only allow long options to prevent it interpreting negative numbers as short options
+// NOLINTNEXTLINE(hicpp-signed-bitwise)
+constexpr auto style = po::command_line_style::allow_long | po::command_line_style::long_allow_adjacent |
+    po::command_line_style::long_allow_next | po::command_line_style::allow_guessing;
+
+static void doHelp(po::variables_map& map);
+static void doVersion(po::variables_map& map);
+static void doWrite(po::variables_map& map);
+static void doInfo(po::variables_map& args);
+static void doDeviceInfo(po::variables_map& args);
+static void doRegisterInfo(po::variables_map& args);
+static void doRegisterSize(po::variables_map& args);
+static void doMultiplexedData(po::variables_map& args);
 
 /**********************************************************************************************************************/
-
-static std::vector<Command> vectorOfCommands = {{"help", printHelp, "Prints the help text", "\t\t\t\t\t"},
-    {"version", getVersion, "Prints the tools version", "\t\t\t\t"},
-    {"info", getInfo, "Prints all devices", "\t\t\t\t\t"},
-    {"device_info", getDeviceInfo, "Prints the register list of a device", "Board\t\t\t"},
-    {"register_info", getRegisterInfo, "Prints the info of a register", "Board Module Register \t\t"},
-    {"register_size", getRegisterSize, "Prints the size of a register", "Board Module Register \t\t"},
-    {"read", readRegister, "Read data from Board", "\tBoard Module Register [offset] [elements] [raw | hex]"},
-    {"write", writeRegister, "Write data to Board", "\tBoard Module Register Value [offset]\t"},
-    {"read_dma_raw", readDmaRawData,
-        "Read raw 32 bit values from DMA registers without Fixed point "
-        "conversion",
-        "Board Module Register [offset] [elements] [raw | hex]\t"},
-    {"read_seq", readMultiplexedData,
-        "Get demultiplexed data sequences from a memory region (containing "
-        "muxed data sequences)",
-        "Board Module DataRegionName [\"sequenceList\"] [Offset] "
-        "[numElements]"}};
-
-/**********************************************************************************************************************/
+std::map<std::string, Command> commands;
 
 /**
  * @brief Main Entry Function
@@ -91,39 +71,189 @@ static std::vector<Command> vectorOfCommands = {{"help", printHelp, "Prints the 
  *
  */
 int main(int argc, const char* argv[]) {
-  if(argc < 2) {
-    std::cerr << "Not enough input arguments. Please find usage instructions below." << std::endl;
-    printHelp(argc, argv);
+  commands = {
+      {"help", {doHelp, "Print the help text", {}, {}}},
+      {"version", {doVersion, "Print the tool's version", {}, {}}},
+      {"info", {doInfo, "Prints all devices", {}, {}}},
+      {"device_info",
+          {doDeviceInfo, "Prints the register list of a device",
+              []() {
+                po::options_description desc("device-info options");
+                desc.add_options()("help", "Print help for read")(
+                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file");
+
+                po::positional_options_description pos;
+                pos.add("device", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device"}}},
+      {"register_info",
+          {doRegisterInfo, "Prints the info of a register",
+              []() {
+                po::options_description desc("register-info options");
+                desc.add_options()("help", "Print help for read")(
+                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
+                    "module", po::value<std::string>()->required(), "Name of the module in the device")(
+                    "register", po::value<std::string>()->required(), "Name of the register");
+
+                po::positional_options_description pos;
+                pos.add("device", 1).add("module", 1).add("register", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module register"}}},
+      {"register_size",
+          {doRegisterSize, "Prints the size of a register",
+              []() {
+                po::options_description desc("register-size options");
+                desc.add_options()("help", "Print help for read")(
+                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
+                    "module", po::value<std::string>()->required(), "Name of the module in the device")(
+                    "register", po::value<std::string>()->required(), "Name of the register");
+
+                po::positional_options_description pos;
+                pos.add("device", 1).add("module", 1).add("register", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module register"}}},
+      {"read",
+          {readRegisterInternal, "Read data from board",
+              []() {
+                po::options_description desc("read options");
+                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
+                    "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+                    "Name of the module in the device")("register", po::value<std::string>()->required(),
+                    "Name of the register")("offset", po::value<uint32_t>()->default_value(0), "Offset in register")(
+                    "elements", po::value<uint32_t>()->default_value(0), "Number of elements to read")("display-mode",
+                    po::value<std::string>()->default_value("double"), "Read-out format (hex, raw or double)");
+
+                po::positional_options_description pos;
+                pos.add("device", 1)
+                    .add("module", 1)
+                    .add("register", 1)
+                    .add("offset", 1)
+                    .add("elements", 1)
+                    .add("display-mode", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module register [offset] [elements] [hex|raw|double]"}}},
+      {"read_dma_raw",
+          {readRegisterInternal, "Read raw 32 bit values from DMA registers without fixed point conversion",
+              []() {
+                po::options_description desc("read_raw_dma options");
+                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
+                    "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+                    "Name of the module in the device")("register", po::value<std::string>()->required(),
+                    "Name of the register")("offset", po::value<uint32_t>()->default_value(0), "Offset in register")(
+                    "elements", po::value<uint32_t>()->default_value(0), "Number of elements to read")(
+                    "display-mode", po::value<std::string>()->default_value("raw"), "Read-out format (hex, raw)");
+
+                po::positional_options_description pos;
+                pos.add("device", 1)
+                    .add("module", 1)
+                    .add("register", 1)
+                    .add("offset", 1)
+                    .add("elements", 1)
+                    .add("display-mode", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module register [offset] [elements] [hex|raw]"}}},
+      {"read_seq",
+          {doMultiplexedData, "Get demultiplexed data sequences from a memory region (containing muxed data sequences)",
+              []() {
+                po::options_description desc("read_raw_dma options");
+                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
+                    "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+                    "Name of the module in the device")("region-name", po::value<std::string>()->required(),
+                    "Name of the register")("sequence-list", po::value<std::string>()->default_value(""),
+                    "Space-separated list of channels to print")("offset", po::value<uint32_t>()->default_value(0),
+                    "Offset in register")("elements", po::value<uint32_t>(), "Number of elements to read")(
+                    "display-mode", po::value<std::string>()->default_value("raw"), "Read-out format (hex, raw)");
+
+                po::positional_options_description pos;
+                pos.add("device", 1)
+                    .add("module", 1)
+                    .add("region-name", 1)
+                    .add("sequence-list", 1)
+                    .add("offset", 1)
+                    .add("elements", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module region-name [offset] [elements] [hex|raw]"}}},
+      {
+          "write",
+          {doWrite, "Write data to board",
+              []() {
+                po::options_description desc("write options");
+                desc.add_options()("help", "Print help for write")(
+                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
+                    "module", po::value<std::string>()->required(), "Name of the module in the device")(
+                    "register", po::value<std::string>()->required(), "Name of the register")(
+                    "value", po::value<std::string>()->required(), "Values to write to the register")(
+                    "offset", po::value<uint32_t>()->default_value(0), "Offset in register");
+
+                po::positional_options_description pos;
+                pos.add("device", 1).add("module", 1).add("register", 1).add("value", 1).add("offset", 1);
+                return std::make_pair(desc, pos);
+              }(),
+              {"device module register value [offset]"}},
+      },
+  };
+  namespace po = boost::program_options;
+
+  po::options_description global("Global options");
+  global.add_options()("json", "Output data in machine-readable JSON format")("command", po::value<std::string>(),
+      "command to execute")("subargs", po::value<std::vector<std::string>>(), "Arguments for command");
+
+  po::positional_options_description subcommandCollector;
+  subcommandCollector.add("command", 1).add("subargs", -1);
+
+  po::variables_map vm;
+
+  po::parsed_options parsed = po::command_line_parser(argc, argv)
+                                  .options(global)
+                                  .positional(subcommandCollector)
+                                  .style(style)
+                                  .allow_unregistered()
+                                  .run();
+
+  po::store(parsed, vm);
+
+  if(vm.count("command") == 0) {
+    doHelp(vm);
     return 1;
   }
+  std::string cmd = vm["command"].as<std::string>();
 
-  std::string cmd = argv[1];
-  std::ranges::transform(cmd, cmd.begin(), ::tolower);
+  if(auto it = commands.find(cmd); it != commands.end()) {
+    auto& command = it->second;
+    auto opts = po::collect_unrecognized(parsed.options, po::include_positional);
+    opts.erase(opts.begin());
+    try {
+      // Get the subcommand-specific commandline options from the command entry and parse again
+      auto [desc, pos] = command.options;
+      po::store(po::command_line_parser(opts).options(desc).positional(pos).style(style).run(), vm);
 
-  try {
-    auto it = vectorOfCommands.begin();
-
-    // Look for the right command
-    for(; it != vectorOfCommands.end(); ++it) {
-      if(it->name == cmd) {
-        break;
+      // If the user requested help for the command, print it and just exit
+      if(vm.count("help") > 0) {
+        if(command.help) {
+          std::cout << "mtca4u [--json] " << cmd << " " << *command.help << std::endl;
+        }
+        std::cout << global << std::endl;
+        std::cout << desc << std::endl;
+        return 0;
       }
-    }
 
-    // Check if search was successful
-    if(it == vectorOfCommands.end()) {
-      std::cerr << "Unknown command. Please find usage instructions below." << std::endl;
-      printHelp(argc, argv);
+      po::notify(vm);
+
+      command.callback(vm);
+    }
+    catch(std::exception& ex) {
+      std::cout << ex.what() << std::endl;
       return 1;
     }
-
-    // Ok run method
-    it->callback(argc - 2, &argv[2]);
   }
-
-  catch(ChimeraTK::logic_error& e) {
-    std::cerr << e.what() << std::endl;
-    return 1;
+  else {
+    doHelp(vm);
   }
 
   return 0;
@@ -134,6 +264,40 @@ int main(int argc, const char* argv[]) {
 /**********************************************************************************************************************/
 
 // Implementations
+
+/**********************************************************************************************************************/
+
+static void doHelp(po::variables_map& /*map*/) {
+  std::cout << std::endl
+            << "mtca4u command line tools, version " << ChimeraTK::command_line_tools::VERSION << "\n"
+            << std::endl;
+  std::cout << "Available commands:" << std::endl;
+
+  auto keys = std::views::keys(commands);
+  std::vector<std::string> foo = {keys.begin(), keys.end()};
+  std::ranges::sort(foo, {}, &std::string::length);
+  auto maxLength = foo.rbegin()->length();
+
+  for(auto& [name, cmd] : commands) {
+    auto pattern = std::format("\t{{: <{}}}\t{{}}", maxLength);
+    std::cout << std::vformat(pattern, std::make_format_args(name, cmd.description)) << std::endl;
+  }
+
+  std::cout << "\nFor details on a command, run mtca4u command --help" << std::endl;
+
+  std::cout << std::endl
+            << std::endl
+            << "For further help or bug reports please contact chimeratk_support@desy.de" << std::endl
+            << std::endl;
+}
+
+/**********************************************************************************************************************/
+
+static void doVersion(po::variables_map& /* */) {
+  std::cout << ChimeraTK::command_line_tools::VERSION << std::endl;
+}
+
+/**********************************************************************************************************************/
 
 // Try to find a dmap file in the current directory.
 // Returns an empty std::string if not found.
@@ -202,48 +366,13 @@ boost::shared_ptr<ChimeraTK::Device> getDevice(const std::string& deviceName) {
 /**********************************************************************************************************************/
 
 /**
- * @brief PrintHelp shows the help text on the console
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void printHelp(unsigned int /*argc*/, const char* /*argv*/[]) {
-  std::cout << std::endl
-            << "mtca4u command line tools, version " << ChimeraTK::command_line_tools::VERSION << "\n"
-            << std::endl;
-  std::cout << "Available commands are:" << std::endl << std::endl;
-
-  for(auto& command : vectorOfCommands) {
-    std::cout << "  " << command.name << "\t" << command.example << "\t" << command.description << std::endl;
-  }
-  std::cout << std::endl
-            << std::endl
-            << "For further help or bug reports please contact chimeratk_support@desy.de" << std::endl
-            << std::endl;
-}
-
-/**********************************************************************************************************************/
-
-/**
- * @brief getVersion shows the command line tools version
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void getVersion(unsigned int /*argc*/, const char* /*argv*/[]) {
-  std::cout << ChimeraTK::command_line_tools::VERSION << std::endl;
-}
-
-/**
  * @brief getInfo shows the device information
  *
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getInfo(unsigned int /*argc*/, const char* /*argv*/[]) {
+void doInfo([[maybe_unused]] po::variables_map& args) {
   auto dmapFileName = findDMapFile();
 
   if(dmapFileName.empty()) {
@@ -282,12 +411,8 @@ void getInfo(unsigned int /*argc*/, const char* /*argv*/[]) {
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getDeviceInfo(unsigned int argc, const char* argv[]) {
-  if(argc < 1) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
-  }
-
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(argv[0]);
+void doDeviceInfo(po::variables_map& args) {
+  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
 
   auto catalog = device->getRegisterCatalogue();
 
@@ -334,15 +459,11 @@ void getDeviceInfo(unsigned int argc, const char* argv[]) {
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getRegisterInfo(unsigned int argc, const char* argv[]) {
-  if(argc < 3) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
-  }
-
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(argv[0]);
+void doRegisterInfo(po::variables_map& args) {
+  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
   auto catalog = device->getRegisterCatalogue();
 
-  auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
+  auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
 
   std::cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << std::endl;
   std::cout << regInfo.getRegisterName().getWithAltSeparator() << "\t" << regInfo.getNumberOfElements();
@@ -359,68 +480,41 @@ void getRegisterInfo(unsigned int argc, const char* argv[]) {
 /**********************************************************************************************************************/
 
 /**
- * getRegisterInfo prints the size of a register (number of elements).
+ * doRegisterSize prints the size of a register (number of elements).
  * \todo FIXME: For 2D- registers it is the size of one channel.
  *
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter
  *
  */
-void getRegisterSize(unsigned int argc, const char* argv[]) {
-  if(argc < 3) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
-  }
-
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(argv[0]);
+void doRegisterSize(po::variables_map& args) {
+  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
   auto catalog = device->getRegisterCatalogue();
 
-  auto regInfo = catalog.getRegister(std::string(argv[1]) + "/" + argv[2]);
+  auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
 
   std::cout << regInfo.getNumberOfElements() << std::endl;
 }
 
 /**********************************************************************************************************************/
-
-/**
- * @brief readRegister
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- * Parameter: device, module, register, [offset], [elements], [cmode]
- */
-void readRegister(unsigned int argc, const char* argv[]) {
-  const unsigned int maxCmdArgs = 6;
-
-  if(argc < 3) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
-  }
-  // validate argc
-  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
-  std::vector<std::string> argList = createArgList(argc, argv, maxCmdArgs);
-
-  readRegisterInternal(argList);
-}
-
+/**********************************************************************************************************************/
 /**********************************************************************************************************************/
 
-void readRegisterInternal(const std::vector<std::string>& argList) {
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_offset = 3, pp_elements = 4, pp_cmode = 5;
+void readRegisterInternal(const po::variables_map& args) {
+  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
 
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(argList[pp_device]);
+  auto registerPath = ChimeraTK::RegisterPath(args["module"].as<std::string>()) / args["register"].as<std::string>();
 
-  auto registerPath = ChimeraTK::RegisterPath(argList[pp_module]) / argList[pp_register];
-
-  uint offset = stringToUIntWithZeroDefault(argList[pp_offset]);
-  uint numElements = stringToUIntWithZeroDefault(argList[pp_elements]);
-  std::string cmode = extractDisplayMode(argList[pp_cmode]);
+  auto offset = args["offset"].as<uint32_t>();
+  auto numElements = args["elements"].as<uint32_t>();
+  auto displayMode = args["display-mode"].as<std::string>();
 
   // Read as raw values
-  if((cmode == "raw") || (cmode == "hex")) {
+  if(displayMode == "raw" || displayMode == "hex") {
     auto accessor =
         device->getOneDRegisterAccessor<int32_t>(registerPath, numElements, offset, {ChimeraTK::AccessMode::raw});
     accessor.read();
-    if(cmode == "hex") {
+    if(displayMode == "hex") {
       std::cout << std::hex;
     }
     else {
@@ -430,7 +524,7 @@ void readRegisterInternal(const std::vector<std::string>& argList) {
       std::cout << static_cast<uint32_t>(value) << "\n";
     }
   }
-  else { // Read with automatic conversion to double
+  else if(displayMode == "double") {
     auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
     accessor.read();
     std::cout << std::scientific << std::setprecision(8);
@@ -438,33 +532,31 @@ void readRegisterInternal(const std::vector<std::string>& argList) {
       std::cout << value << "\n";
     }
   }
+  else {
+    throw ChimeraTK::logic_error("Invalid display mode " + displayMode);
+  }
+
   std::cout << std::flush;
 }
 
 /**********************************************************************************************************************/
 
 /**
- * @brief writeRegister
+ * @brief doWrite
  *
  * @param[in] argc Number of additional parameter
  * @param[in] argv Pointer to additional parameter
  *
  * Parameter: device, module, register, value, [offset]
  */
-void writeRegister(unsigned int argc, const char* argv[]) {
-  const unsigned int pp_device = 0, pp_module = 1, pp_register = 2, pp_value = 3, pp_offset = 4;
+void doWrite(po::variables_map& map) {
+  boost::shared_ptr<ChimeraTK::Device> device = getDevice(map["device"].as<std::string>());
+  auto registerPath = ChimeraTK::RegisterPath(map["module"].as<std::string>()) / map["register"].as<std::string>();
 
-  if(argc < 4) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
-  }
-
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(argv[pp_device]);
-  auto registerPath = ChimeraTK::RegisterPath(argv[pp_module]) / argv[pp_register];
-
-  const uint32_t offset = (argc > pp_offset) ? std::stoul(argv[pp_offset]) : 0;
+  auto offset = map["offset"].as<uint32_t>();
 
   std::vector<std::string> vS;
-  boost::split(vS, argv[pp_value], boost::is_any_of("\t "));
+  boost::split(vS, map["value"].as<std::string>(), boost::is_any_of("\t "));
 
   size_t numElements = vS.size();
 
@@ -487,60 +579,35 @@ void writeRegister(unsigned int argc, const char* argv[]) {
 
 /**********************************************************************************************************************/
 
-/**
- * @brief readRawDmaData
- *
- * @param[in] nlhs Number of left hand side parameter
- * @param[inout] phls Pointer to the left hand side parameter
- *
- * Parameter: device, register, [offset], [elements], [display_mode]
- */
-void readDmaRawData(unsigned int argc, const char* argv[]) {
-  const unsigned int pp_cmode = 5;
-  const unsigned int maxCmdArgs = 6;
-
-  if(argc < 3) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
+void doMultiplexedData(po::variables_map& args) {
+  auto deMuxedData = createOpenedMuxDataAccesor(
+      args["device"].as<std::string>(), args["module"].as<std::string>(), args["region-name"].as<std::string>());
+  auto sequenceLength = deMuxedData.getNElementsPerChannel();
+  auto numSequences = deMuxedData.getNChannels();
+  auto seqList = extractSequenceList(args["sequence-list"].as<std::string>(), deMuxedData, numSequences);
+  auto maxOffset = sequenceLength - 1;
+  auto offset = args["offset"].as<std::uint32_t>();
+  if(offset > maxOffset) {
+    auto v = po::invalid_option_value(std::to_string(offset));
+    v.set_substitute("option", "--offset");
+    throw po::validation_error(v);
   }
-  // validate argc
-  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
-  std::vector<std::string> argList = createArgList(argc, argv, maxCmdArgs);
-
-  if(argList.size() <= pp_cmode || argList[pp_cmode].empty()) {
-    argList.resize(pp_cmode + 1);
-    argList[pp_cmode] = "raw";
+  uint32_t elements = sequenceLength - offset;
+  if(args.count("elements") > 0) {
+    elements = args["elements"].as<std::uint32_t>();
   }
 
-  readRegisterInternal(argList);
-}
-
-/**********************************************************************************************************************/
-
-void readMultiplexedData(unsigned int argc, const char* argv[]) {
-  const unsigned int maxCmdArgs = 6;
-  const unsigned int pp_deviceName = 0, pp_module = 1, pp_register = 2, pp_seqList = 3, pp_offset = 4, pp_elements = 5;
-  if(argc < 3) {
-    throw ChimeraTK::logic_error("Not enough input arguments.");
+  if(elements > sequenceLength - offset) {
+    auto v = po::invalid_option_value(std::to_string(elements));
+    v.set_substitute("option", "--elements");
+    throw po::validation_error(v);
   }
 
-  // validate argc
-  argc = (argc > maxCmdArgs) ? maxCmdArgs : argc;
-  std::vector<std::string> argList = createArgList(argc, argv, maxCmdArgs);
-
-  DmaAccessor deMuxedData =
-      createOpenedMuxDataAccesor(argList[pp_deviceName], argList[pp_module], argList[pp_register]);
-  uint sequenceLength = deMuxedData.getNElementsPerChannel();
-  uint numSequences = deMuxedData.getNChannels();
-  std::vector<uint> seqList = extractSequenceList(argList[pp_seqList], deMuxedData, numSequences);
-  uint maxOffset = sequenceLength - 1;
-  uint offset = extractOffset(argList[pp_offset], maxOffset);
-
-  uint numElements = extractNumElements(argList[pp_elements], offset, sequenceLength);
-  if(numElements == 0) {
+  if(elements == 0) {
     return;
   }
 
-  printSeqList(deMuxedData, seqList, offset, numElements);
+  printSeqList(deMuxedData, seqList, offset, elements);
 }
 
 /**********************************************************************************************************************/
@@ -597,103 +664,6 @@ std::vector<uint> extractSequenceList(std::string const& list, const DmaAccessor
     ss << "Could not convert sequence List";
     throw ChimeraTK::logic_error(ss.str()); // + d + " to double: " + ex.what(), 3);
   }
-}
-
-/**********************************************************************************************************************/
-
-std::vector<std::string> createArgList(uint argc, const char* argv[], uint maxArgs) {
-  // pre-condition argc <= maxArgs is assumed when invoking this method.
-  std::vector<std::string> listOfCmdArguments;
-  listOfCmdArguments.reserve(maxArgs);
-
-  for(size_t i = 0; i < argc; i++) {
-    listOfCmdArguments.emplace_back(argv[i]);
-  }
-
-  // rest of the arguments provided represented as empty std::strings
-  for(size_t i = argc; i < maxArgs; i++) {
-    listOfCmdArguments.emplace_back("");
-  }
-  return listOfCmdArguments;
-}
-
-/**********************************************************************************************************************/
-
-uint extractOffset(const std::string& userEnteredOffset, uint maxOffset) {
-  // TODO: try avoid code duplication with extractNumElements
-  uint offset;
-  if(userEnteredOffset.empty()) {
-    offset = 0;
-  }
-  else {
-    try {
-      offset = std::stoul(userEnteredOffset);
-    }
-    catch(std::invalid_argument&) {
-      throw ChimeraTK::logic_error("Could not convert Offset");
-    }
-  }
-
-  if(offset > maxOffset) {
-    throw ChimeraTK::logic_error("Offset exceed register size.");
-  }
-
-  return offset;
-}
-
-/**********************************************************************************************************************/
-
-uint extractNumElements(const std::string& userEnteredValue, uint validOffset, uint maxElements) {
-  uint numElements;
-  try {
-    if(userEnteredValue.empty()) {
-      numElements = maxElements - validOffset;
-    }
-    else {
-      numElements = std::stoul(userEnteredValue);
-    }
-  }
-  catch(std::invalid_argument&) {
-    throw ChimeraTK::logic_error("Could not convert numElements to return");
-  }
-  if(numElements > (maxElements - validOffset)) {
-    throw ChimeraTK::logic_error("Data size exceed register size.");
-  }
-  return numElements;
-}
-
-/**********************************************************************************************************************/
-
-uint stringToUIntWithZeroDefault(const std::string& userEnteredValue) {
-  // return 0 if the std::string is empty (0 means the whole register or no offset)
-  if(userEnteredValue.empty()) {
-    return 0;
-  }
-
-  // Just extract the number and convert a possible conversion exception to
-  // an ChimeraTK::logic_error with proper error message
-  uint numElements;
-  try {
-    numElements = std::stoul(userEnteredValue);
-  }
-  catch(std::invalid_argument&) {
-    throw ChimeraTK::logic_error("Could not convert numElements or offset to a valid number.");
-  }
-
-  return numElements;
-}
-
-/**********************************************************************************************************************/
-
-std::string extractDisplayMode(const std::string& displayMode) {
-  if(displayMode.empty()) {
-    return "double";
-  } // default
-
-  if((displayMode != "raw") && (displayMode != "hex") && (displayMode != "double")) {
-    throw ChimeraTK::logic_error("Invalid display mode; Use raw | hex");
-  }
-  return displayMode;
 }
 
 /**********************************************************************************************************************/

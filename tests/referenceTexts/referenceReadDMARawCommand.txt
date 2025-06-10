@@ -178,10 +178,10 @@ uint representation for Raw Value when num elem is 0 -> This was causing aseg fa
 324
 361
 Command called with not enough arguments
-Not enough input arguments.
+the option '--register' is required but missing
 bad num elements
-Could not convert numElements or offset to a valid number.
+the argument ('hsg') for option '--elements' is invalid
 bad offset Value
-Could not convert numElements or offset to a valid number.
+the argument ('hj') for option '--offset' is invalid
 bad display mode
-Invalid display mode; Use raw | hex
+Invalid display mode invalid_dispaly_option

@@ -29,9 +29,9 @@ invoke command with bad values
 Could not convert parameter to double.
 Could not convert parameter to double.
 invoke command with no values to write
-Not enough input arguments.
+the option '--value' is required but missing
 invoke command with incomplete parameters
-Not enough input arguments.
+the option '--register' is required but missing
 2.30000000e+01
 2.80000000e+01
 7.80000000e+01

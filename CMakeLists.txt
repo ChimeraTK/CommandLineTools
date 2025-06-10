@@ -13,7 +13,7 @@ find_package(ChimeraTK-DeviceAccess 03.18 REQUIRED)
 include(cmake/set_default_build_to_release.cmake)
 include(cmake/set_default_flags.cmake)
 
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem program_options REQUIRED)
 
 # put the version number into the version file and add the include directory in the build tree, where we put it
 configure_file(cmake/version.h.in
@@ -28,9 +28,8 @@ configure_file(cmake/referenceReadRegisterCommand.txt.in
 add_executable(mtca4u ${CMAKE_SOURCE_DIR}/src/mtca4u_cmd.cpp)
 target_include_directories(mtca4u PRIVATE include ${PROJECT_BINARY_DIR}/include)
 set_target_properties(mtca4u PROPERTIES VERSION ${${PROJECT_NAME}_SOVERSION})
-set_target_properties(mtca4u PROPERTIES LINK_FLAGS "${ChimeraTK-DeviceAccess_LINK_FLAGS}")
 set_target_properties(mtca4u PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(mtca4u ChimeraTK::ChimeraTK-DeviceAccess ${Boost_LIBRARIES})
+target_link_libraries(mtca4u ChimeraTK::ChimeraTK-DeviceAccess Boost::system Boost::filesystem Boost::program_options)
 
 # change the install prefix to the source directory in case the user has not specified a destination
 # i. e. CMAKE_INSTALL_PREFIX is not set manually
@@ -124,4 +123,3 @@ FILE(GLOB location_of_script_files
 ADD_SCRIPTS_AS_TESTS("${location_of_script_files}")
 
 include(cmake/enable_code_coverage_report.cmake)
-

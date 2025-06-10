@@ -14,17 +14,17 @@ reading from offset 2 of seq# 1
 121	
 256	
 reading from invalid offset  in seq# 1
-Offset exceed register size.
+the argument ('50') for option 'offset' is invalid
 reading specific number of elemnts from seq# 1 offset 1
 36	
 121	
 256	
 reading more elemnts than supported seq# 1
-Data size exceed register size.
+the argument ('18') for option 'elements' is invalid
 bad parameters
-Could not convert Offset
+the argument ('hsg') for option '--offset' is invalid
 insufficient arguments
-Not enough input arguments.
+the option '--region-name' is required but missing
 Using sequence list to print selected sequences (3, 2, 1) - valid case
 9	4	1	
 64	49	36	

@@ -1,19 +1,19 @@
-Not enough input arguments. Please find usage instructions below.
 
 mtca4u command line tools, version IRRELEVANT
 
-Available commands are:
+Available commands:
+	device_info  	Prints the register list of a device
+	help         	Print the help text
+	info         	Prints all devices
+	read         	Read data from board
+	read_dma_raw 	Read raw 32 bit values from DMA registers without fixed point conversion
+	read_seq     	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
+	register_info	Prints the info of a register
+	register_size	Prints the size of a register
+	version      	Print the tool's version
+	write        	Write data to board
 
-  help							Prints the help text
-  version						Prints the tools version
-  info							Prints all devices
-  device_info	Board				Prints the register list of a device
-  register_info	Board Module Register 			Prints the info of a register
-  register_size	Board Module Register 			Prints the size of a register
-  read		Board Module Register [offset] [elements] [raw | hex]	Read data from Board
-  write		Board Module Register Value [offset]		Write data to Board
-  read_dma_raw	Board Module Register [offset] [elements] [raw | hex]		Read raw 32 bit values from DMA registers without Fixed point conversion
-  read_seq	Board Module DataRegionName ["sequenceList"] [Offset] [numElements]	Get demultiplexed data sequences from a memory region (containing muxed data sequences)
+For details on a command, run mtca4u command --help
 
 
 For further help or bug reports please contact chimeratk_support@desy.de

@@ -62,4 +62,4 @@ ADC.AREA_DMA_VIA_DMA	1024		1		32		0
 ADC.AREA_DMAABLE_FIXEDPOINT10_1	1024		1		10		1			 
 ADC.AREA_DMAABLE_FIXEDPOINT16_3	1024		1		16		3			 
 Device Info command called with incorrect number of parameters
-Not enough input arguments.
+the option '--device' is required but missing

@@ -105,7 +105,7 @@ uint representation for Raw Value when num elem is 0 -> This was causing aseg fa
 13
 14
 Command called with not enough arguments
-Not enough input arguments.
+the option '--module' is required but missing
 Command called with bad device name
 Cannot find device "NON_EXISTENT_DEVICE" in DMAP file:@PROJECT_BINARY_DIR@/./dummies.dmap
 Command called with SDM URI / CDD and numerical address

@@ -139,10 +139,11 @@ int main(int argc, const char* argv[]) {
       {"read_dma_raw",
           {readRegisterInternal, "Read raw 32 bit values from DMA registers without fixed point conversion",
               []() {
-                po::options_description desc("read_raw_dma options");
-                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
-                    "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
-                    "Name of the module in the device")("register", po::value<std::string>()->required(),
+                po::options_description desc("read_dma_raw options");
+                desc.add_options()("help", "Print help for read_dma_raw")(
+                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
+                    "module", po::value<std::string>()->required(), "Name of the module in the device")("register",
+                    po::value<std::string>()->required(),
                     "Name of the register")("offset", po::value<uint32_t>()->default_value(0), "Offset in register")(
                     "elements", po::value<uint32_t>()->default_value(0), "Number of elements to read")(
                     "display-mode", po::value<std::string>()->default_value("raw"), "Read-out format (hex, raw)");
@@ -160,8 +161,8 @@ int main(int argc, const char* argv[]) {
       {"read_seq",
           {doMultiplexedData, "Get demultiplexed data sequences from a memory region (containing muxed data sequences)",
               []() {
-                po::options_description desc("read_raw_dma options");
-                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
+                po::options_description desc("read_seq options");
+                desc.add_options()("help", "Print help for read_seq")("device", po::value<std::string>()->required(),
                     "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
                     "Name of the module in the device")("region-name", po::value<std::string>()->required(),
                     "Name of the register")("sequence-list", po::value<std::string>()->default_value(""),
@@ -178,7 +179,7 @@ int main(int argc, const char* argv[]) {
                     .add("elements", 1);
                 return std::make_pair(desc, pos);
               }(),
-              {"device module region-name [offset] [elements] [hex|raw]"}}},
+              {"device module region-name [sequence-list] [offset] [elements]"}}},
       {
           "write",
           {doWrite, "Write data to board",

@@ -31,9 +31,6 @@ DmaAccessor createOpenedMuxDataAccesor(
 void printSeqList(const DmaAccessor& deMuxedData, std::vector<uint> const& seqList, uint offset, uint elements);
 std::vector<uint> extractSequenceList(std::string const& list, const DmaAccessor& deMuxedData, uint numSequences);
 std::vector<uint> createListWithAllSequences(const DmaAccessor& deMuxedData);
-// converts a std::string to uint, catches and replaces the conversion exception, and
-// returns 0 if the std::string is empty
-void readRegisterInternal(const po::variables_map& args);
 
 using CmdFnc = std::function<void(po::variables_map& map)>;
 
@@ -52,7 +49,8 @@ constexpr auto style = po::command_line_style::allow_long | po::command_line_sty
     po::command_line_style::long_allow_next | po::command_line_style::allow_guessing;
 
 static void doHelp(po::variables_map& map);
-static void doVersion(po::variables_map& map);
+static void doVersion(po::variables_map& args);
+static void readRegisterInternal(const po::variables_map& args);
 static void doWrite(po::variables_map& map);
 static void doInfo(po::variables_map& args);
 static void doDeviceInfo(po::variables_map& args);

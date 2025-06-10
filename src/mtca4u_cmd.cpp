@@ -9,6 +9,8 @@
 #include <ChimeraTK/OneDRegisterAccessor.h>
 #include <ChimeraTK/TwoDRegisterAccessor.h>
 
+#include <nlohmann/json.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -32,13 +34,387 @@ void printSeqList(const DmaAccessor& deMuxedData, std::vector<uint> const& seqLi
 std::vector<uint> extractSequenceList(std::string const& list, const DmaAccessor& deMuxedData, uint numSequences);
 std::vector<uint> createListWithAllSequences(const DmaAccessor& deMuxedData);
 
-using CmdFnc = std::function<void(po::variables_map& map)>;
-
 struct Command {
-  CmdFnc callback;
+  Command() = default;
+  explicit Command(std::pair<po::options_description, po::positional_options_description> opts) : options(opts) {}
+  virtual ~Command() = default;
   std::string description;
   std::pair<po::options_description, po::positional_options_description> options;
   std::optional<std::string> help;
+  nlohmann::json output{{"version", 1}, {"program_version", ChimeraTK::command_line_tools::VERSION}};
+
+  static std::string findDMapFile() {
+    std::vector<boost::filesystem::path> dmapFileNames;
+    for(auto& dirEntry : boost::filesystem::directory_iterator(".")) {
+      if(dirEntry.path().extension() == ".dmap") {
+        dmapFileNames.push_back(dirEntry.path());
+      }
+    }
+    // No DMap file found. Do not throw here but return an empty std::string.
+    // We can print a much nicer error message in the context where we know the device alias.
+    if(dmapFileNames.empty()) {
+      return "";
+    }
+    if(dmapFileNames.size() > 1) {
+      // search for a file named CommandLineTools.dmap and return it. Only throw if not found.
+      for(auto& dmapFileName : dmapFileNames) {
+        if(dmapFileName.stem() == "CommandLineTools") {
+          return dmapFileName.string();
+        }
+      }
+
+      throw ChimeraTK::logic_error(
+          "Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a "
+          "symlink) so I know which one to take.");
+    }
+
+    return dmapFileNames.front().string();
+  }
+
+  static boost::shared_ptr<ChimeraTK::Device> getDevice(const std::string& deviceName) {
+    bool isSdm = (deviceName.substr(0, 6) == "sdm://");                       // starts with sdm://
+    bool isCdd = ((deviceName.front() == '(') && (deviceName.back() == ')')); // starts with '(' and end with ')' =
+                                                                              // Chimera Device Descriptor
+
+    if(!isSdm && !isCdd) {
+      /* If the device name is not an sdm and not a cdd, the dmap file path has to
+         be set. Try to determine it if not given.
+         For SDM URIs and CDDs the dmap file name can be empty. */
+      std::string dmapFileName = findDMapFile();
+      if(dmapFileName.empty()) {
+        throw ChimeraTK::logic_error("No dmap file found to resolve alias name '" + deviceName +
+            "'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
+      }
+
+      ChimeraTK::setDMapFilePath(dmapFileName);
+    }
+
+    boost::shared_ptr<ChimeraTK::Device> tempDevice(new ChimeraTK::Device());
+    tempDevice->open(deviceName);
+    return tempDevice;
+  }
+
+  virtual void operator()([[maybe_unused]] std::ostream& stream, [[maybe_unused]] po::variables_map& map) = 0;
+
+  void setError(const std::string& error) { output["error-message"] = error; }
+};
+
+std::map<std::string, std::shared_ptr<Command>> commands;
+
+/**********************************************************************************************************************/
+
+struct Version final : Command {
+  Version() { description = "Print the tool's version"; };
+  ~Version() final = default;
+  void operator()(std::ostream& stream, [[maybe_unused]] po::variables_map& args) final {
+    stream << ChimeraTK::command_line_tools::VERSION << std::endl;
+  }
+};
+
+/**********************************************************************************************************************/
+
+struct Help final : Command {
+  Help() { description = "Print the help text"; }
+  ~Help() final = default;
+  void operator()([[maybe_unused]] std::ostream& stream, [[maybe_unused]] po::variables_map& args) final {
+    std::cout << std::endl
+              << "mtca4u command line tools, version " << ChimeraTK::command_line_tools::VERSION << "\n"
+              << std::endl;
+    std::cout << "Available commands:" << std::endl;
+
+    auto keys = std::views::keys(commands);
+    std::vector<std::string> foo = {keys.begin(), keys.end()};
+    std::ranges::sort(foo, {}, &std::string::length);
+    auto maxLength = foo.rbegin()->length();
+
+    for(auto& [name, cmd] : commands) {
+      std::cout << std::format("\t{: <{}}\t{}", name, maxLength, cmd->description) << std::endl;
+    }
+
+    std::cout << "\nFor details on a command, run mtca4u command --help" << std::endl;
+
+    std::cout << std::endl
+              << std::endl
+              << "For further help or bug reports please contact chimeratk_support@desy.de" << std::endl
+              << std::endl;
+  }
+};
+/**********************************************************************************************************************/
+
+struct Info final : Command {
+  Info() { description = "Prints all devices"; }
+  ~Info() final = default;
+
+  void operator()(std::ostream& stream, [[maybe_unused]] po::variables_map& args) final {
+    auto dmapFileName = findDMapFile();
+
+    if(dmapFileName.empty()) {
+      stream << "No dmap file found. No device information available." << std::endl;
+      setError("No dmap file found. No device information available.");
+      return;
+    }
+
+    ChimeraTK::setDMapFilePath(dmapFileName);
+    auto deviceInfoMap = ChimeraTK::DMapFileParser::parse(dmapFileName);
+
+    stream << std::endl << "Available devices: " << std::endl << std::endl;
+    stream << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << std::endl;
+
+    auto devices = nlohmann::json::array();
+
+    for(auto& deviceInfo : *deviceInfoMap) {
+      nlohmann::json device = {{"deviceName", deviceInfo.deviceName}, {"uri", deviceInfo.uri},
+          {"mapFileName", (deviceInfo.mapFileName.empty() ? "na" : deviceInfo.mapFileName)}};
+      devices.push_back(device);
+      stream << deviceInfo.deviceName << "\t" << deviceInfo.uri
+             << "\t\t"
+             // mapFileName might be empty
+             << (deviceInfo.mapFileName.empty() ? "na" : deviceInfo.mapFileName)
+             << "\t"
+             // For compatibility: print na. The registers WORD_FIRMWARE and WORD_REVISION
+             // don't exist in map files any more, so no one can really have used this feature.
+             // It breaks abstraction anyway, so we just disable it, but keep the format for compatibility.
+             << "na"
+             << "\t\t"
+             << "na" << std::endl;
+    }
+    output["devices"] = devices;
+    stream << std::endl;
+  }
+};
+
+/**********************************************************************************************************************/
+
+struct DeviceInfo final : Command {
+  DeviceInfo()
+  : Command([]() {
+      po::options_description desc("device-info options");
+      desc.add_options()("help", "Print help for read")(
+          "device", po::value<std::string>()->required(), "CDD or alias in DMAP file");
+
+      po::positional_options_description pos;
+      pos.add("device", 1);
+      return std::make_pair(desc, pos);
+    }()) {
+    description = "Prints the register list of a device";
+    help = "device";
+  }
+  ~DeviceInfo() final = default;
+
+  void operator()(std::ostream& stream, [[maybe_unused]] po::variables_map& args) final {
+    auto device = getDevice(args["device"].as<std::string>());
+
+    auto catalog = device->getRegisterCatalogue();
+
+    stream << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << std::endl;
+
+    nlohmann::json registers = nlohmann::json::array();
+    unsigned int n2DChannels = 0;
+    for(const auto& reg : catalog) {
+      nlohmann::json registerDescription;
+      const auto* reg_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&reg);
+
+      registerDescription = {
+          {"name", reg.getRegisterName().getWithAltSeparator()},
+          {"numberOfElements", reg.getNumberOfElements()},
+          {"channels", reg.getNumberOfChannels()},
+      };
+      if(reg_casted) {
+        registerDescription["signed"] = reg_casted->channels.front().signedFlag;
+        registerDescription["width"] = reg_casted->channels.front().width;
+        registerDescription["fractionalBits"] = reg_casted->channels.front().nFractionalBits;
+      }
+
+      registers.push_back(registerDescription);
+      if(reg.getNumberOfDimensions() == 2) {
+        ++n2DChannels;
+        continue;
+      }
+      stream << reg.getRegisterName().getWithAltSeparator() << "\t";
+      stream << reg.getNumberOfElements() << "\t\t";
+      if(reg_casted) {
+        // ToDo: Add Description and handle multiple channels properly
+        stream << reg_casted->channels.front().signedFlag << "\t\t";
+        stream << reg_casted->channels.front().width << "\t\t" << reg_casted->channels.front().nFractionalBits
+               << "\t\t\t ";
+      }
+      stream << std::endl;
+    }
+
+    if(n2DChannels > 0) {
+      stream << "\n2D registers\n"
+             << "Name\tnChannels\tnElementsPerChannel\n";
+      for(const auto& reg : catalog) {
+        if(reg.getNumberOfDimensions() != 2) {
+          continue;
+        }
+        stream << reg.getRegisterName().getWithAltSeparator() << "\t";
+        stream << reg.getNumberOfChannels() << "\t\t";
+        stream << reg.getNumberOfElements() << std::endl;
+      }
+    }
+
+    output["registers"] = registers;
+  }
+};
+
+/**********************************************************************************************************************/
+
+struct RegisterInfo final : Command {
+  RegisterInfo()
+  : Command([]() {
+      po::options_description desc("register-info options");
+      desc.add_options()("help", "Print help for register_info")("device", po::value<std::string>()->required(),
+          "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+          "Name of the module in the device")("register", po::value<std::string>()->required(), "Name of the register");
+
+      po::positional_options_description pos;
+      pos.add("device", 1).add("module", 1).add("register", 1);
+      return std::make_pair(desc, pos);
+    }()) {
+    description = "Prints the info of a register";
+    help = "device module register";
+  };
+  ~RegisterInfo() final = default;
+
+  void operator()(std::ostream& stream, [[maybe_unused]] po::variables_map& args) final {
+    auto device = getDevice(args["device"].as<std::string>());
+    auto catalog = device->getRegisterCatalogue();
+
+    auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
+
+    nlohmann::json registers = nlohmann::json::array();
+    nlohmann::json registerDescription;
+
+    stream << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << std::endl;
+    stream << regInfo.getRegisterName().getWithAltSeparator() << "\t" << regInfo.getNumberOfElements();
+
+    registerDescription = {
+        {"name", regInfo.getRegisterName().getWithAltSeparator()},
+        {"numberOfElements", regInfo.getNumberOfElements()},
+        {"channels", regInfo.getNumberOfChannels()},
+    };
+
+    const auto* regInfo_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&regInfo.getImpl());
+    if(regInfo_casted) {
+      registerDescription["signed"] = regInfo_casted->channels.front().signedFlag;
+      registerDescription["width"] = regInfo_casted->channels.front().width;
+      registerDescription["fractionalBits"] = regInfo_casted->channels.front().nFractionalBits;
+      // ToDo: Add Description and handle multiple channels properly
+      stream << "\t\t" << regInfo_casted->channels.front().signedFlag << "\t\t";
+      stream << regInfo_casted->channels.front().width << "\t\t" << regInfo_casted->channels.front().nFractionalBits
+             << "\t\t\t " << std::endl;
+    }
+    registers.push_back(registerDescription);
+    output["registers"] = registers;
+  }
+};
+
+/**********************************************************************************************************************/
+
+struct RegisterSize final : Command {
+  RegisterSize()
+  : Command([]() {
+      po::options_description desc("register-size options");
+      desc.add_options()("help", "Print help for register_size")("device", po::value<std::string>()->required(),
+          "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+          "Name of the module in the device")("register", po::value<std::string>()->required(), "Name of the register");
+
+      po::positional_options_description pos;
+      pos.add("device", 1).add("module", 1).add("register", 1);
+      return std::make_pair(desc, pos);
+    }()) {
+    description = "Prints the size of a register";
+    help = "device module register";
+  }
+
+  ~RegisterSize() final = default;
+
+  void operator()(std::ostream& stream, po::variables_map& args) final {
+    auto device = getDevice(args["device"].as<std::string>());
+    auto catalog = device->getRegisterCatalogue();
+
+    auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
+
+    stream << regInfo.getNumberOfElements() << std::endl;
+    output["registerSize"] = regInfo.getNumberOfElements();
+  }
+};
+
+/**********************************************************************************************************************/
+
+struct Read final : Command {
+  Read()
+  : Command([]() {
+      po::options_description desc("read options");
+      desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
+          "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
+          "Name of the module in the device")("register", po::value<std::string>()->required(), "Name of the register")(
+          "offset", po::value<uint32_t>()->default_value(0), "Offset in register")(
+          "elements", po::value<uint32_t>()->default_value(0), "Number of elements to read")(
+          "display-mode", po::value<std::string>()->default_value("double"), "Read-out format (hex, raw or double)");
+
+      po::positional_options_description pos;
+      pos.add("device", 1)
+          .add("module", 1)
+          .add("register", 1)
+          .add("offset", 1)
+          .add("elements", 1)
+          .add("display-mode", 1);
+      return std::make_pair(desc, pos);
+    }()) {
+    description = "Read data from board";
+    help = "device module register [offset] [elements] [hex|raw|double]";
+  }
+  ~Read() final = default;
+  void operator()(std::ostream& stream, po::variables_map& args) final {
+    boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
+
+    auto registerPath = ChimeraTK::RegisterPath(args["module"].as<std::string>()) / args["register"].as<std::string>();
+
+    auto offset = args["offset"].as<uint32_t>();
+    auto numElements = args["elements"].as<uint32_t>();
+    auto displayMode = args["display-mode"].as<std::string>();
+
+    nlohmann::json data;
+    // Read as raw values
+    if(displayMode == "raw" || displayMode == "hex") {
+      auto accessor =
+          device->getOneDRegisterAccessor<int32_t>(registerPath, numElements, offset, {ChimeraTK::AccessMode::raw});
+      accessor.read();
+      if(displayMode == "hex") {
+        stream << std::hex;
+      }
+      else {
+        stream << std::fixed;
+      }
+      for(auto value : accessor) {
+        if(displayMode == "hex") {
+          data.push_back(std::format("{:x}", static_cast<uint32_t>(value)));
+        }
+        else {
+          data.push_back(static_cast<uint32_t>(value));
+        }
+        stream << static_cast<uint32_t>(value) << "\n";
+      }
+    }
+    else if(displayMode == "double") {
+      auto accessor = device->getOneDRegisterAccessor<double>(registerPath, numElements, offset);
+      accessor.read();
+      stream << std::scientific << std::setprecision(8);
+      for(auto value : accessor) {
+        data.push_back(std::format("{:8e}", value));
+        stream << value << "\n";
+      }
+    }
+    else {
+      throw ChimeraTK::logic_error("Invalid display mode " + displayMode);
+    }
+
+    output["values"] = data;
+
+    stream << std::flush;
+  }
 };
 
 /**********************************************************************************************************************/
@@ -48,18 +424,11 @@ struct Command {
 constexpr auto style = po::command_line_style::allow_long | po::command_line_style::long_allow_adjacent |
     po::command_line_style::long_allow_next | po::command_line_style::allow_guessing;
 
-static void doHelp(po::variables_map& map);
-static void doVersion(po::variables_map& args);
 static void readRegisterInternal(const po::variables_map& args);
 static void doWrite(po::variables_map& map);
-static void doInfo(po::variables_map& args);
-static void doDeviceInfo(po::variables_map& args);
-static void doRegisterInfo(po::variables_map& args);
-static void doRegisterSize(po::variables_map& args);
 static void doMultiplexedData(po::variables_map& args);
 
 /**********************************************************************************************************************/
-std::map<std::string, Command> commands;
 
 /**
  * @brief Main Entry Function
@@ -70,70 +439,14 @@ std::map<std::string, Command> commands;
  */
 int main(int argc, const char* argv[]) {
   commands = {
-      {"help", {doHelp, "Print the help text", {}, {}}},
-      {"version", {doVersion, "Print the tool's version", {}, {}}},
-      {"info", {doInfo, "Prints all devices", {}, {}}},
-      {"device_info",
-          {doDeviceInfo, "Prints the register list of a device",
-              []() {
-                po::options_description desc("device-info options");
-                desc.add_options()("help", "Print help for read")(
-                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file");
-
-                po::positional_options_description pos;
-                pos.add("device", 1);
-                return std::make_pair(desc, pos);
-              }(),
-              {"device"}}},
-      {"register_info",
-          {doRegisterInfo, "Prints the info of a register",
-              []() {
-                po::options_description desc("register-info options");
-                desc.add_options()("help", "Print help for read")(
-                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
-                    "module", po::value<std::string>()->required(), "Name of the module in the device")(
-                    "register", po::value<std::string>()->required(), "Name of the register");
-
-                po::positional_options_description pos;
-                pos.add("device", 1).add("module", 1).add("register", 1);
-                return std::make_pair(desc, pos);
-              }(),
-              {"device module register"}}},
-      {"register_size",
-          {doRegisterSize, "Prints the size of a register",
-              []() {
-                po::options_description desc("register-size options");
-                desc.add_options()("help", "Print help for read")(
-                    "device", po::value<std::string>()->required(), "CDD or alias in DMAP file")(
-                    "module", po::value<std::string>()->required(), "Name of the module in the device")(
-                    "register", po::value<std::string>()->required(), "Name of the register");
-
-                po::positional_options_description pos;
-                pos.add("device", 1).add("module", 1).add("register", 1);
-                return std::make_pair(desc, pos);
-              }(),
-              {"device module register"}}},
-      {"read",
-          {readRegisterInternal, "Read data from board",
-              []() {
-                po::options_description desc("read options");
-                desc.add_options()("help", "Print help for read")("device", po::value<std::string>()->required(),
-                    "CDD or alias in DMAP file")("module", po::value<std::string>()->required(),
-                    "Name of the module in the device")("register", po::value<std::string>()->required(),
-                    "Name of the register")("offset", po::value<uint32_t>()->default_value(0), "Offset in register")(
-                    "elements", po::value<uint32_t>()->default_value(0), "Number of elements to read")("display-mode",
-                    po::value<std::string>()->default_value("double"), "Read-out format (hex, raw or double)");
-
-                po::positional_options_description pos;
-                pos.add("device", 1)
-                    .add("module", 1)
-                    .add("register", 1)
-                    .add("offset", 1)
-                    .add("elements", 1)
-                    .add("display-mode", 1);
-                return std::make_pair(desc, pos);
-              }(),
-              {"device module register [offset] [elements] [hex|raw|double]"}}},
+      {"help", std::make_shared<Help>()},
+      {"version", std::make_shared<Version>()},
+      {"info", std::make_shared<Info>()},
+      {"device_info", std::make_shared<DeviceInfo>()},
+      {"register_info", std::make_shared<RegisterInfo>()},
+      {"register_size", std::make_shared<RegisterSize>()},
+      {"read", std::make_shared<Read>()},
+#if 0
       {"read_dma_raw",
           {readRegisterInternal, "Read raw 32 bit values from DMA registers without fixed point conversion",
               []() {
@@ -196,6 +509,7 @@ int main(int argc, const char* argv[]) {
               }(),
               {"device module register value [offset]"}},
       },
+#endif
   };
   namespace po = boost::program_options;
 
@@ -218,24 +532,30 @@ int main(int argc, const char* argv[]) {
   po::store(parsed, vm);
 
   if(vm.count("command") == 0) {
-    doHelp(vm);
+    commands["help"]->operator()(std::cout, vm);
     return 1;
   }
   std::string cmd = vm["command"].as<std::string>();
 
+  int exitCode = EXIT_SUCCESS;
+
   if(auto it = commands.find(cmd); it != commands.end()) {
     auto& command = it->second;
     auto opts = po::collect_unrecognized(parsed.options, po::include_positional);
+
+    // drop the command from the options
     opts.erase(opts.begin());
+
+    // Get the subcommand-specific commandline options from the command entry and parse again
+    std::stringstream output;
     try {
-      // Get the subcommand-specific commandline options from the command entry and parse again
-      auto [desc, pos] = command.options;
+      auto [desc, pos] = command->options;
       po::store(po::command_line_parser(opts).options(desc).positional(pos).style(style).run(), vm);
 
       // If the user requested help for the command, print it and just exit
       if(vm.count("help") > 0) {
-        if(command.help) {
-          std::cout << "mtca4u [--json] " << cmd << " " << *command.help << std::endl;
+        if(command->help) {
+          std::cout << "mtca4u [--json] " << cmd << " " << *command->help << std::endl;
         }
         std::cout << global << std::endl;
         std::cout << desc << std::endl;
@@ -244,18 +564,26 @@ int main(int argc, const char* argv[]) {
 
       po::notify(vm);
 
-      command.callback(vm);
+      command->operator()(output, vm);
     }
     catch(std::exception& ex) {
-      std::cout << ex.what() << std::endl;
-      return 1;
+      command->setError(ex.what());
+      exitCode = EXIT_FAILURE;
     }
-  }
-  else {
-    doHelp(vm);
+
+    if(vm.contains("json")) {
+      std::cout << command->output << std::endl;
+    }
+    else {
+      std::cout << output.str() << std::endl;
+    }
+
+    return exitCode;
   }
 
-  return 0;
+  commands["help"]->operator()(std::cout, vm);
+
+  return EXIT_SUCCESS;
 }
 
 /**********************************************************************************************************************/
@@ -266,240 +594,12 @@ int main(int argc, const char* argv[]) {
 
 /**********************************************************************************************************************/
 
-static void doHelp(po::variables_map& /*map*/) {
-  std::cout << std::endl
-            << "mtca4u command line tools, version " << ChimeraTK::command_line_tools::VERSION << "\n"
-            << std::endl;
-  std::cout << "Available commands:" << std::endl;
-
-  auto keys = std::views::keys(commands);
-  std::vector<std::string> foo = {keys.begin(), keys.end()};
-  std::ranges::sort(foo, {}, &std::string::length);
-  auto maxLength = foo.rbegin()->length();
-
-  for(auto& [name, cmd] : commands) {
-    auto pattern = std::format("\t{{: <{}}}\t{{}}", maxLength);
-    std::cout << std::vformat(pattern, std::make_format_args(name, cmd.description)) << std::endl;
-  }
-
-  std::cout << "\nFor details on a command, run mtca4u command --help" << std::endl;
-
-  std::cout << std::endl
-            << std::endl
-            << "For further help or bug reports please contact chimeratk_support@desy.de" << std::endl
-            << std::endl;
-}
-
-/**********************************************************************************************************************/
-
-static void doVersion(po::variables_map& /* */) {
-  std::cout << ChimeraTK::command_line_tools::VERSION << std::endl;
-}
-
-/**********************************************************************************************************************/
-
-// Try to find a dmap file in the current directory.
-// Returns an empty std::string if not found.
-std::string findDMapFile() {
-  std::vector<boost::filesystem::path> dmapFileNames;
-  for(auto& dirEntry : boost::filesystem::directory_iterator(".")) {
-    if(dirEntry.path().extension() == ".dmap") {
-      dmapFileNames.push_back(dirEntry.path());
-    }
-  }
-  // No DMap file found. Do not throw here but return an empty std::string.
-  // We can print a much nicer error message in the context where we know the device alias.
-  if(dmapFileNames.empty()) {
-    return "";
-  }
-  if(dmapFileNames.size() > 1) {
-    // search for a file named CommandLineTools.dmap and return it. Only throw if not found.
-    for(auto& dmapFileName : dmapFileNames) {
-      if(dmapFileName.stem() == "CommandLineTools") {
-        return dmapFileName.string();
-      }
-    }
-
-    throw ChimeraTK::logic_error("Found more than one dmap file. Name one of them 'CommandLineTools.dmap' (or create a "
-                                 "symlink) so I know which one to take.");
-  }
-
-  return dmapFileNames.front().string();
-}
-
-/**********************************************************************************************************************/
-
-/**
- * Gets an opened device from the factory.
- *
- * @param dmapFileName File to be loaded or all in the current directory if
- * empty
- * @todo FIXME: This has the old behaviour that it scans all dmap files in the
- * current directory, which is deprecated. Come up with a new, proper mechanism.
- */
-// we intentionally use the copy argument so we can safely modify the argument
-// inside the function
-boost::shared_ptr<ChimeraTK::Device> getDevice(const std::string& deviceName) {
-  bool isSdm = (deviceName.substr(0, 6) == "sdm://");                       // starts with sdm://
-  bool isCdd = ((deviceName.front() == '(') && (deviceName.back() == ')')); // starts with '(' and end with ')' =
-                                                                            // Chimera Device Descriptor
-
-  if(!isSdm && !isCdd) {
-    /* If the device name is not an sdm and not a cdd, the dmap file path has to
-       be set. Try to determine it if not given.
-       For SDM URIs and CDDs the dmap file name can be empty. */
-    std::string dmapFileName = findDMapFile();
-    if(dmapFileName.empty()) {
-      throw ChimeraTK::logic_error("No dmap file found to resolve alias name '" + deviceName +
-          "'. Provide a dmap file or use a ChimeraTK Device Descriptor!");
-    }
-
-    ChimeraTK::setDMapFilePath(dmapFileName);
-  }
-
-  boost::shared_ptr<ChimeraTK::Device> tempDevice(new ChimeraTK::Device());
-  tempDevice->open(deviceName);
-  return tempDevice;
-}
-
-/**********************************************************************************************************************/
-
-/**
- * @brief getInfo shows the device information
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void doInfo([[maybe_unused]] po::variables_map& args) {
-  auto dmapFileName = findDMapFile();
-
-  if(dmapFileName.empty()) {
-    std::cout << "No dmap file found. No device information available." << std::endl;
-    return;
-  }
-
-  ChimeraTK::setDMapFilePath(dmapFileName);
-  auto deviceInfoMap = ChimeraTK::DMapFileParser::parse(dmapFileName);
-
-  std::cout << std::endl << "Available devices: " << std::endl << std::endl;
-  std::cout << "Name\tDevice\t\t\tMap-File\t\t\tFirmware\tRevision" << std::endl;
-
-  for(auto& deviceInfo : *deviceInfoMap) {
-    std::cout << deviceInfo.deviceName << "\t" << deviceInfo.uri
-              << "\t\t"
-              // mapFileName might be empty
-              << (deviceInfo.mapFileName.empty() ? "na" : deviceInfo.mapFileName)
-              << "\t"
-              // For compatibility: print na. The registers WORD_FIRMWARE and WORD_REVISION
-              // don't exist in map files any more, so no one can really have used this feature.
-              // It breaks abstraction anyway, so we just disable it, but keep the format for compatibility.
-              << "na"
-              << "\t\t"
-              << "na" << std::endl;
-  }
-  std::cout << std::endl;
-}
-
-/**********************************************************************************************************************/
-
-/**
- * @brief getDeviceInfo shows the device information
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void doDeviceInfo(po::variables_map& args) {
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
-
-  auto catalog = device->getRegisterCatalogue();
-
-  std::cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << std::endl;
-
-  unsigned int n2DChannels = 0;
-  for(const auto& reg : catalog) {
-    if(reg.getNumberOfDimensions() == 2) {
-      ++n2DChannels;
-      continue;
-    }
-    std::cout << reg.getRegisterName().getWithAltSeparator() << "\t";
-    std::cout << reg.getNumberOfElements() << "\t\t";
-    const auto* reg_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&reg);
-    if(reg_casted) {
-      // ToDo: Add Description and handle multiple channels properly
-      std::cout << reg_casted->channels.front().signedFlag << "\t\t";
-      std::cout << reg_casted->channels.front().width << "\t\t" << reg_casted->channels.front().nFractionalBits
-                << "\t\t\t ";
-    }
-    std::cout << std::endl;
-  }
-
-  if(n2DChannels > 0) {
-    std::cout << "\n2D registers\n"
-              << "Name\tnChannels\tnElementsPerChannel\n";
-    for(const auto& reg : catalog) {
-      if(reg.getNumberOfDimensions() != 2) {
-        continue;
-      }
-      std::cout << reg.getRegisterName().getWithAltSeparator() << "\t";
-      std::cout << reg.getNumberOfChannels() << "\t\t";
-      std::cout << reg.getNumberOfElements() << std::endl;
-    }
-  }
-}
-
-/**********************************************************************************************************************/
-
-/**
- * @brief getRegisterInfo shows the register information
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void doRegisterInfo(po::variables_map& args) {
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
-  auto catalog = device->getRegisterCatalogue();
-
-  auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
-
-  std::cout << "Name\t\tElements\tSigned\t\tBits\t\tFractional_Bits\t\tDescription" << std::endl;
-  std::cout << regInfo.getRegisterName().getWithAltSeparator() << "\t" << regInfo.getNumberOfElements();
-
-  const auto* regInfo_casted = dynamic_cast<const ChimeraTK::NumericAddressedRegisterInfo*>(&regInfo.getImpl());
-  if(regInfo_casted) {
-    // ToDo: Add Description and handle multiple channels properly
-    std::cout << "\t\t" << regInfo_casted->channels.front().signedFlag << "\t\t";
-    std::cout << regInfo_casted->channels.front().width << "\t\t" << regInfo_casted->channels.front().nFractionalBits
-              << "\t\t\t " << std::endl;
-  }
-}
-
-/**********************************************************************************************************************/
-
-/**
- * doRegisterSize prints the size of a register (number of elements).
- * \todo FIXME: For 2D- registers it is the size of one channel.
- *
- * @param[in] argc Number of additional parameter
- * @param[in] argv Pointer to additional parameter
- *
- */
-void doRegisterSize(po::variables_map& args) {
-  boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
-  auto catalog = device->getRegisterCatalogue();
-
-  auto regInfo = catalog.getRegister(args["module"].as<std::string>() + "/" + args["register"].as<std::string>());
-
-  std::cout << regInfo.getNumberOfElements() << std::endl;
-}
-
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 
 void readRegisterInternal(const po::variables_map& args) {
+#if 0
   boost::shared_ptr<ChimeraTK::Device> device = getDevice(args["device"].as<std::string>());
 
   auto registerPath = ChimeraTK::RegisterPath(args["module"].as<std::string>()) / args["register"].as<std::string>();
@@ -536,6 +636,7 @@ void readRegisterInternal(const po::variables_map& args) {
   }
 
   std::cout << std::flush;
+#endif
 }
 
 /**********************************************************************************************************************/
@@ -549,6 +650,7 @@ void readRegisterInternal(const po::variables_map& args) {
  * Parameter: device, module, register, value, [offset]
  */
 void doWrite(po::variables_map& map) {
+#if 0
   boost::shared_ptr<ChimeraTK::Device> device = getDevice(map["device"].as<std::string>());
   auto registerPath = ChimeraTK::RegisterPath(map["module"].as<std::string>()) / map["register"].as<std::string>();
 
@@ -574,6 +676,7 @@ void doWrite(po::variables_map& map) {
   }
 
   accessor.write();
+#endif
 }
 
 /**********************************************************************************************************************/
@@ -613,10 +716,13 @@ void doMultiplexedData(po::variables_map& args) {
 
 DmaAccessor createOpenedMuxDataAccesor(
     const std::string& deviceName, const std::string& module, const std::string& regionName) {
+#if 0
   boost::shared_ptr<ChimeraTK::Device> device = getDevice(deviceName);
   auto deMuxedData = device->getTwoDRegisterAccessor<double>(module + "/" + regionName);
   deMuxedData.read();
   return deMuxedData;
+#endif
+  return {};
 }
 
 /**********************************************************************************************************************/
@@ -675,3 +781,5 @@ std::vector<uint> createListWithAllSequences(const DmaAccessor& deMuxedData) {
   }
   return seqList;
 }
+
+/**********************************************************************************************************************/

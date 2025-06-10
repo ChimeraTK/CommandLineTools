@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.16)
 project(CommandLineTools)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 00)
-set(${PROJECT_NAME}_MINOR_VERSION 16)
-set(${PROJECT_NAME}_PATCH_VERSION 02)
+set(${PROJECT_NAME}_MINOR_VERSION 17)
+set(${PROJECT_NAME}_PATCH_VERSION 00)
 
 include(cmake/set_version_numbers.cmake)
 
@@ -14,6 +14,8 @@ include(cmake/set_default_build_to_release.cmake)
 include(cmake/set_default_flags.cmake)
 
 find_package(Boost COMPONENTS system filesystem program_options REQUIRED)
+find_package(nlohmann_json 03.11 REQUIRED)
+add_compile_definitions(JSON_DIAGNOSTICS=1)
 
 # put the version number into the version file and add the include directory in the build tree, where we put it
 configure_file(cmake/version.h.in

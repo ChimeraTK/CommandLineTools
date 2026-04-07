@@ -105,5 +105,5 @@ expected_console_output="./referenceTexts/referenceReadRegisterCommand.txt"
 
 } &> $actual_console_output
 
-grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+scripts/filterOutput.sh $actual_console_output > ${actual_console_output}-filtered
 diff ${actual_console_output}-filtered $expected_console_output

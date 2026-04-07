@@ -31,5 +31,5 @@ mkdir -p /var/run/lock/mtcadummy
 
 ) 9>/var/run/lock/mtcadummy/mtcadummys0
 
-grep -v "gcda:Merge mismatch" "$actual_console_output" > "${actual_console_output}-filtered"
+scripts/filterOutput.sh $actual_console_output > ${actual_console_output}-filtered
 diff "${actual_console_output}-filtered" "$expected_console_output"

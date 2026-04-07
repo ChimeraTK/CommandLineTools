@@ -12,5 +12,5 @@ expected_console_output="./referenceTexts/referenceNoParameters.txt"
 # we cannot pipe directly into sed because otherwise the $? would give the result of sed, not of mtca4u.
 sed "{s/version [0-9][0-9]\.[0-9][0-9]\.[0-9][0-9]/version IRRELEVANT/}" -i $actual_console_output
 
-grep -v "gcda:Merge mismatch" $actual_console_output > ${actual_console_output}-filtered
+scripts/filterOutput.sh $actual_console_output > ${actual_console_output}-filtered
 diff ${actual_console_output}-filtered $expected_console_output

@@ -120,7 +120,7 @@ COPY_SOURCE_TO_TARGET(${dmap_source_directory} ${PROJECT_BINARY_DIR})
 # prepare a list with names of scripts
 FILE(GLOB location_of_script_files
   "${PROJECT_BINARY_DIR}/scripts/*.py"
-  "${PROJECT_BINARY_DIR}/scripts/*.sh")
+  "${PROJECT_BINARY_DIR}/scripts/test*.sh")
 ADD_SCRIPTS_AS_TESTS("${location_of_script_files}")
 
 include(cmake/enable_code_coverage_report.cmake)
